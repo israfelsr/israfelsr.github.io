@@ -23,7 +23,7 @@ email: israfel.sr@gmail.com
 description: >- # this means to ignore newlines until "baseurl:"
   This blog contains summaries and learning notes of papers from AI topics related
   with robotics, reinforcement learning and computer vision.
-baseurl: "israfelsr.github.io" # the subpath of your site, e.g. /blog
+baseurl: "" # the subpath of your site, e.g. /blog
 url: "israfelsr.github.io" # the base hostname & protocol for your site, e.g. http://example.com
 twitter_username: IsrafelSalazar
 github_username:  israfelsr
