@@ -5,10 +5,7 @@ date: 2021-03-05
 tags: information_theory
 usemathjax: true
 ---
->This post shows the motivation behind study information theory using a video coder.
-
----
-
+> This is an introductory post about source coding. Taking the example of a video encoder, this post defines some important concepts of Information Theory and Source Coding. 
 
 ### Motivation
 
@@ -17,7 +14,7 @@ Let's consider HD video at 25 frames per second transmitted over a wireless chan
 Since we know that HD corresponds to 1920 x 1080 pixels we can compute the following.
 
 $$
-Rs = 1920\cdot1080\cdot3 [\frac{pixels}{frames}]\cdot8[\frac{bits}{pixels}]\cdot25[\frac{frames}{s}] = 1,244 x 10^9 [bits/s] = 1,244 [GBits/s]
+Rs = 1920\cdot1080\cdot3 [\frac{pixels}{frames}]\cdot8[\frac{bits}{pixels}]\cdot25[\frac{frames}{s}] = 1,244 x 10^9 [bits/s] = 1,244 [Gbits/s]
 $$
 
 If we consider the 5G networks targets a maximum transmission rate of 1Gb/s for a whole cell (*cumulated rate for cell users connected to 5G access point*) we see that it's not possible to send this HD video without compression even in the most advanced wireless communication system.
