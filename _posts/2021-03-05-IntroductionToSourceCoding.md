@@ -40,7 +40,8 @@ We apply a transformation from the RBG to YUV where Y corresponds to the lumines
 
 ---
 
-##### Assignament 1: Find the transformation $$T$$.
+##### Assignament 1: 
+Find the transformation $$T$$.
 
 Searching, it's easy to find that the function $$T$$ corresponds to the following transformation:
 
@@ -64,7 +65,8 @@ Since most of the information is on the $$y$$ component, usually the $$y,v$$ com
 
 ---
 
-##### Assignment: What means the 4, 2 and 0 in the $$(4:2:0)$$ subsampling?
+##### Assignment: 
+What means the 4, 2 and 0 in the $$(4:2:0)$$ subsampling?
 
 This subsampling is called chroma subsampling. On it, we encode images using less resolution for the luminesce or chroma information. In this representation of the form $$(J:a:b)$$,  $$J$$ corresponds to the horizontal sampling reference (width of the conceptual region). $$a$$ to the number of chrominance samples (Cr, Cb) in the first row of $$J$$ pixels. And $$b$$, the number of changes of chrominance samples (Cr, Cb) between the first and second row of $$J$$ pixels.
 
@@ -160,11 +162,12 @@ $$
 \Rightarrow \Delta_2 = E_2 - \tilde{E}_2 + \Delta_1
 $$
 
-We can see here that for every frame $i$, the error will be composed with a component due to quantization $$E_2 - \tilde{E}_2$$, but also with a component that belongs to the error of the previous frame. We can see that using the scheme the distortion accumulates.
+We can see here that for every frame $$i$$, the error will be composed with a component due to quantization $$E_2 - \tilde{E}_2$$, but also with a component that belongs to the error of the previous frame. We can see that using the scheme the distortion accumulates.
 
 ---
 
-##### Assignment: Using this same scheme evaluates $\Delta_3$.
+##### Assignment: 
+Using this same scheme evaluates $$\Delta_3$$.
 
 Following the same logic we can obtain that:
 
@@ -183,4 +186,4 @@ $$
 \Rightarrow \Delta_2 = E'_2- \tilde{E'}_2
 $$
 
-We see that in this case there is no accumulation of the distortion, the distortion of the $i$-frame only depends on the quantization. This structure of video coder is still valid for H265 video coder (vvc) and it has been proposed in the late 80's.
+We see that in this case there is no accumulation of the distortion, the distortion of the $$i$$-frame only depends on the quantization. This structure of video coder is still valid for H265 video coder (vvc) and it has been proposed in the late 80's.
