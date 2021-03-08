@@ -92,11 +92,12 @@ From now on we will focus only on the $$y$$ component of the image. The procedur
 - **Transform**: This stage exploits the spatial redundancy to represent the pixels in a basis better suited for further compression.
 
 $$
+\begin{align}
 \begin{bmatrix}
 9 & 10\\
 11 & 9
 \end{bmatrix}
-= 9 
+&= 9 
 \begin{bmatrix}
 1 & 0\\
 0 & 0
@@ -116,7 +117,7 @@ $$
 0 & 0\\
 0 & 1
 \end{bmatrix}\\
-=10 
+&=10 
 \begin{bmatrix}
 1 & 1\\
 1 & 1
@@ -137,6 +138,7 @@ $$
 0 & 1\\
 0 & 1
 \end{bmatrix}\Bigg)
+\end{align}
 $$
 
 Above we have two different bases on $$\mathbb{R}^{2x2}$$. One using the canonical matrices and the other using an <u>approximate</u> way with <u>fewer components</u>. These two transformations are <u>reversibles</u>.
