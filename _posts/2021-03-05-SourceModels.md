@@ -69,7 +69,7 @@ We can conclude that to describe a stationary memory less source, a single vecto
 
 **<u>Assignament</u>:** 
 
-Consider a source $x$ described by $$X=\{1,2,3,4\}$$ and described by $$p=\{0.1, 0.3, 0.4, 0.2\}$$.
+Consider a source $$x$$ described by $$X=\{1,2,3,4\}$$ and described by $$p=\{0.1, 0.3, 0.4, 0.2\}$$.
 
 The following code in matlab generates the numbes using the cumulative sum of the probaility vector. 
 
@@ -191,7 +191,7 @@ The source entropy reach its maximum when the symbols are equiprobable. Another 
 Most real world sources exhibit memory, resulting in correlated source signals. The memory can be modeled as a Markov process. 
 
 * First order MP: the current symbol depends only on the previous symbol $$\Pr(x_n=a_{i_n}\vert x_{n-1}=a_{i_{n-1}})$$. 
-* $$N$$-order MP: the current symbol depends on $N$ previous symbols $$\Pr(x_n=a_{i_n}\vert x_{n-1}=a_{i_{n-1}},..,x_1=a_{i_1})$$.
+* $$N$$-order MP: the current symbol depends on $$N$$ previous symbols $$\Pr(x_n=a_{i_n}\vert x_{n-1}=a_{i_{n-1}},..,x_1=a_{i_1})$$.
 
 If the process is stationary then the probability to obtain a given sequence of symbols does not depend on time.
 
@@ -218,7 +218,7 @@ In this case:
 
 **Assignment.** 
 
-Generate 1000 samples according to the transition probability given by $\Rho$.
+Generate 1000 samples according to the transition probability given by $$P$$.
 
 ```python
 samples = np.zeros((1000))
