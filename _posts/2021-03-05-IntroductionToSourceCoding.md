@@ -1,6 +1,6 @@
 ---
 layout: "post"
-title: "Lecture 1: Introduction to Source Coding"
+title: "Lecture 1. Introduction to Source Coding"
 date: 2021-03-05
 tags: information_theory
 usemathjax: true
