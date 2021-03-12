@@ -9,7 +9,7 @@ usemathjax: true
 
 PSO is a stochastic optimization algorithm that was inspired in social intelligence. A swarm is 
 
-<img src="/Users/israfelsalazar/Downloads/PngItem_800661.png" style="zoom:100%;" />
+<img src="/assets/img/particleswarm/birdsswarm.png" style="zoom:100%;" />
 
 
 
