@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en" dir="auto">
+
+<head><meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="robots" content="index, follow">
+<title>Understanding Batch, Layer and Group Normalization | Isra Salazar</title>
+<meta name="keywords" content="">
+<meta name="description" content="This post is an analysis of the actual normalization techniques and why and how to implement them for neural networks. It&rsquo;s based on the paper of Ioffee and Szegedy [1] from 2015, the modification proposed for Layer Normalization [2] and a much more recent work of Group Normalization [3].
+Batch Normalization (BN) is a milestone technique in the development of deep learning. - Group Normalization paper.
+  One of the big difficulties of deep neural networks is the training stage and its optimization.">
+<meta name="author" content="">
+<link rel="canonical" href="http://example.org/blog/normalizations/">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/katex.min.css"
+    integrity="sha384-KiWOvVjnN8qwAZbuQyWDIbfCLFhLXNETzBQjA/92pIowpC0d2O3nppDGQVgwd2nB" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/katex.min.js"
+    integrity="sha384-0fdwu/T/EQMsQlrHCCHoH10pkPLlKA1jL5dFyUOvB3lfeT2540/2g6YgSi2BL14p"
+    crossorigin="anonymous"></script>
+
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.15.3/dist/contrib/auto-render.min.js"
+    integrity="sha384-+XBljXPPiv+OzfbB3cVmLHf4hdUFHlWNZN5spNQ7rmHTXpd7WvJum6fIACpNNfIR" crossorigin="anonymous"
+    onload="renderMathInElement(document.body);"></script>
+
+<link crossorigin="anonymous" href="/assets/css/stylesheet.min.e454396db036d45b8edbeeaee2b49dbf5a5452bbed50fa8983a6d9e33c20afae.css" integrity="sha256-5FQ5bbA21FuO2&#43;6u4rSdv1pUUrvtUPqJg6bZ4zwgr64=" rel="preload stylesheet" as="style">
+<script defer crossorigin="anonymous" src="/assets/js/highlight.min.2840b7fccd34145847db71a290569594bdbdb00047097f75d6495d162f5d7dff.js" integrity="sha256-KEC3/M00FFhH23GikFaVlL29sABHCX911kldFi9dff8="
+    onload="hljs.initHighlightingOnLoad();"></script>
+<link rel="icon" href="http://example.org/images/favicon.ico">
+<link rel="icon" type="image/png" sizes="16x16" href="http://example.org/favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="http://example.org/favicon-32x32.png">
+<link rel="apple-touch-icon" href="http://example.org/apple-touch-icon.png">
+<link rel="mask-icon" href="http://example.org/safari-pinned-tab.svg">
+<meta name="theme-color" content="#2e2e33">
+<meta name="msapplication-TileColor" content="#2e2e33">
+<noscript>
+    <style>
+        #theme-toggle,
+        .top-link {
+            display: none;
+        }
+
+    </style>
+    <style>
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --theme: rgb(29, 30, 32);
+                --entry: rgb(46, 46, 51);
+                --primary: rgb(218, 218, 219);
+                --secondary: rgb(155, 156, 157);
+                --tertiary: rgb(65, 66, 68);
+                --content: rgb(196, 196, 197);
+                --hljs-bg: rgb(46, 46, 51);
+                --code-bg: rgb(55, 56, 62);
+                --border: rgb(51, 51, 51);
+            }
+
+            .list {
+                background: var(--theme);
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-track {
+                background: 0 0;
+            }
+
+            .list:not(.dark)::-webkit-scrollbar-thumb {
+                border-color: var(--theme);
+            }
+        }
+
+    </style>
+</noscript><meta property="og:title" content="Understanding Batch, Layer and Group Normalization" />
+<meta property="og:description" content="This post is an analysis of the actual normalization techniques and why and how to implement them for neural networks. It&rsquo;s based on the paper of Ioffee and Szegedy [1] from 2015, the modification proposed for Layer Normalization [2] and a much more recent work of Group Normalization [3].
+Batch Normalization (BN) is a milestone technique in the development of deep learning. - Group Normalization paper.
+  One of the big difficulties of deep neural networks is the training stage and its optimization." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="http://example.org/blog/normalizations/" /><meta property="article:section" content="blog" />
+<meta property="article:published_time" content="2020-05-20T16:34:50&#43;02:00" />
+<meta property="article:modified_time" content="2020-05-20T16:34:50&#43;02:00" />
+
+<meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="Understanding Batch, Layer and Group Normalization"/>
+<meta name="twitter:description" content="This post is an analysis of the actual normalization techniques and why and how to implement them for neural networks. It&rsquo;s based on the paper of Ioffee and Szegedy [1] from 2015, the modification proposed for Layer Normalization [2] and a much more recent work of Group Normalization [3].
+Batch Normalization (BN) is a milestone technique in the development of deep learning. - Group Normalization paper.
+  One of the big difficulties of deep neural networks is the training stage and its optimization."/>
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position":  1 ,
+      "name": "Blogs",
+      "item": "http://example.org/blog/"
+    }, 
+    {
+      "@type": "ListItem",
+      "position":  2 ,
+      "name": "Understanding Batch, Layer and Group Normalization",
+      "item": "http://example.org/blog/normalizations/"
+    }
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Understanding Batch, Layer and Group Normalization",
+  "name": "Understanding Batch, Layer and Group Normalization",
+  "description": "This post is an analysis of the actual normalization techniques and why and how to implement them for neural networks. It\u0026rsquo;s based on the paper of Ioffee and Szegedy [1] from 2015, the modification proposed for Layer Normalization [2] and a much more recent work of Group Normalization [3].\nBatch Normalization (BN) is a milestone technique in the development of deep learning. - Group Normalization paper.\n  One of the big difficulties of deep neural networks is the training stage and its optimization.",
+  "keywords": [
+    
+  ],
+  "articleBody": " This post is an analysis of the actual normalization techniques and why and how to implement them for neural networks. It’s based on the paper of Ioffee and Szegedy [1] from 2015, the modification proposed for Layer Normalization [2] and a much more recent work of Group Normalization [3].\nBatch Normalization (BN) is a milestone technique in the development of deep learning. - Group Normalization paper.\n  One of the big difficulties of deep neural networks is the training stage and its optimization. In general, training a stochastic gradient descent (SGD) is not a simple task because of its sensitivity to changes in the hyperparameters, as the learning rate, weights initialization and also because of the dependence of each layer on the parameters of the previous one. A way to improve this process is to use different and sophisticated optimizers, as some of the ones shown in this overview paper. Another approach, the one we will review in this post, is to modify the network’s architecture adding some normalization layers.\nBatch Normalization The Problem: Internal Covariate Shift As an attempt to make the training step more efficient, Ioffe and Szegedy published in 2015 a reparametrization technique that they called batch normalization. They hypothesized that one of the reasons for the difficulty of training neural networks was the Internal Covariate Shift and that reducing it will make the training easier and the convergence faster.\nA change to the input distribution of a learning system is called covariance shift and it happens that inside a neural network the input distribution of each layer is constantly changing during the training step, hence internal covariate shift. This is because when using stochastic gradient to train deep neural networks the weights of each layer update under the assumption that all the other weights remain unchanged. However, in practice they are all updated at the same time causing the distribution to constantly change. This forces the neurons to not only learn the parameters for the needed task but also to adapt themselves to these changes on the input distribution.\nThe Algorithm Based on the idea that apply a whitening preprocessing, normalization plus decorrelation to the input data reduce the covariate shift and make machine learning systems work better, and that any transformation applied to the inputs of a network can also be applied to a sub-network, to reduce the internal covariate shift they proposed put whitening activations at every training step or after some interval to modify the parameters.\nThey took two important simplifications: Since the whitening process is expensive and apply it to several layers is computational expensive, they proposed only to apply normalization, meaning inputs will have zero mean and variance of 1 but they won’t be decorrelated and the second simplification is that they will use mini-batches to estimate the mean and variance of the whole input because the gradient descent algorithms works better with mini-batches. And important must! The normalization layer needs to be differentiable so the SGD algorithm can take the changes into account during the backward pass.\nThe idea is really straightforward as shown in the image below from the paper.\nA bit of explanation: Taking the input mini-batch \\(B = {x_1, x_2, .., x_l}\\)\n We compute the mean of the mini-batch \\(\\mu_B\\). Here it is important to notice that if the dimensions of \\(B\\) are \\((N,D)\\) with \\(N\\) the number of inputs and \\(D\\) the features of each input, we will compute the mean over \\(N\\) with an output of dimension \\((D, )\\). Using the mean, we compute the variance \\(\\sigma^{2}_{B}\\). Note that the variance here is also across \\(N\\). Calculate the normalized input \\(\\hat x_i\\). In the equation we add an epsilon term commonly set as \\(\\epsilon = 1e-5\\) just to avoid division by zero when \\(\\sigma^2_B = 0\\). Finally we add two learnable parameters \\(\\gamma\\) and \\(\\beta\\) that shift and scale the output. They are introduced to moderate the effect of the normalization so the net can have the same power of representation (sometimes is useful to not have zero mean and variance of 1. For example, in the case that the net doesn’t need the normalization it will learn \\(\\gamma=\\sqrt{\\sigma^2_B+\\epsilon}\\) and \\(\\beta=\\frac{\\mu_B}{\\sqrt{\\sigma^2_B+\\epsilon}}\\).  Implementation The moment you were waiting for! Let’s code and start from a vanilla implementation of the forward pass for an input \\(x\\) of dimensions \\((N, D)\\) using the algorithm described above. An useful tip here is to follow up the dimensions of the transformation and the steps taken to compute the output.\ndef batchnorm_forward(x, gamma, beta):  ''' Inputs: - x: Data of shape (N,D) - gamma, beta: Scale and shift of shape (D,) Out: - out = Normalized inputs (N,D) - cache = Useful intermediate values '''  eps = 1e-5   #Forward pass  mu = np.mean(x, axis=0) # mean (D,)  var = np.var(x, axis=0) # var (D,)  var_inv = 1 / np.sqrt(var + eps) # inverse of var (D,)  x_mu = x - mu # input minus mean (N,D)  x_norm = x_mu * var_inv # nomalized input (N,D)  out = gamma * x_norm + beta # scale and shift (N,D)   # Cache: Tupple needed for the backward pass \tcache = (gamma, x_norm, x_mu, var_inv)   return out, cache Backward Pass The vanilla implementation of the forward pass can help us to build the backward pass following each step. It is a little complicated due to the mixed branches of the graph and a useful exercise is to draw the graph and use the chain rule to calculate the derivative for each node. I attached an image from the course CS231n of Stanford that shows the graph for a forward/backward pass.\nIn the function we will receive \\(\\frac{dL}{dY}\\) and we will need to compute \\(\\frac{dL}{dX}, \\frac{dL}{d\\gamma}, \\frac{dL}{d\\beta}\\) using the chain rule, \\(\\frac{dL}{dX}=\\frac{dL}{dY}\\frac{dY}{dX}\\) and the intermediate values we saved in the cache variable. Again, it’s useful to follow up the change in the dimensions of the vectors to be sure that our calculations are good.\ndef batchnorm_backward(dout, cache):  ''' Inputs: - dout: upstream derivate - cache: variables for intermediate derivates Outputs: dx, dgamma, dbeta: dLoss with respect to each variable '''  # Unpack cache variables \tgamma, x_norm, x_mu, var_inv = cache  N = dout.shape[0]   # Backward pass  dgamma = np.sum(dout * x_norm, axis=0) # N,D - D,   dxnorm = dout * gamma # N,D - N,D  dbeta = np.sum(dout, axis=0) # N,D - D,   dxmu = dxnorm * var_inv # N,D - N,D   dvar_inv = np.sum(dxnorm * x_mu, axis=0) # N,D - D,   dvar = dvar_inv * -0.5 * var_inv ** 3 # D,  dx = dxmu   dxmu += dvar * 2/N * x_mu  dmu = -1 * np.sum(dxmu, axis=0)   dx += 1/N * dmu   return dx, dgamma, dbeta Another way to implement the backward pass is to use the numeric calculation for the derivative. After some mathematical workout you should be able to reach equations like the ones shown in the paper and in the figure below. If you are interested you can see the implementation of this function on my GitHub on this link. Implementing the backward pass using simplify gradients should be a little faster than the implementation shown above. On this notebook you can see a comparison of both where the simplify function is 13% faster.\nForward Pass: Testing Time Although the function above for the forward pass is useful for building the backward pass, it has some flaws. In particular let’s take into account the second simplification that the authors do: the batch normalization algorithm uses the mean and variance of a mini-batch waiting that it would be representative of the input. But what happens during testing time? The input now is small, so the values won’t be representative.\nTo solve this we will use an exponentially decaying running mean and a running variance saved from the training time and during testing time we will normalize the inputs with these values of mean and variance. For the decaying rate we will use a momentum constant set commonly as \\(\\rho = 0.9\\).\ndef batchnorm_forward(x, gamma, beta, mode):  ''' Inputs: - x: Data of shape (N,D) - gamma, beta: Scale and shift of shape (D,) - mode: train or test str Out: - out = Normalized inputs (N,D) - cache = Useful intermediate values '''  # Unpacking the parameters\t# Change btw train and test  N, D = x.shape \tmomentum = 0.9 # Setting the momentum constant   # Initialization of mean/var for testing step  running_mean = bn_param.get(\"running_mean\", np.zeros(D, dtype=x.dtype))  running_var = bn_param.get(\"running_var\", np.zeros(D, dtype=x.dtype))   if mode == 'train':  ### Perform batch normalization as before   # Adding the mean and var to the running mean \trunning_mean = momentum * running_mean + (1 - momentum) * mu \trunning_var = momentum * running_var + (1 - momentum) * var  \t# Store the updated running means back into bn_param  bn_param[\"running_mean\"] = running_mean  bn_param[\"running_var\"] = running_var   if mode == 'test':  # Normalizing inputs with the saved data  x_norm = (x - running_mean) / np.sqrt(running_var + eps) \tout = gamma * x_norm + beta   return out, cache  You can see the complete version of this function on my GitHub account as part of my solutions for the assignment 2 of the Stanford course CS231n here.\nBatchNorm Results You may be wondering how much better it is to train a network with batch normalization and how it compares with another trained without it. As an experiment, I trained two 6-Layer Fully Connected Net on the CIFAR-10 Dataset with a batch size of 50 during 10 epochs, one with batch normalization and another without. The training loss for each of them are shown in the figure below where we can see that the model trained with batch normalization, the blue one, converges faster than one without it.\nSo it’s true that batch normalization improves the training of a fully connected neural net. But, the second simplification has an important side effect: what happens if the mini-batch isn’t representative of the input data? And more specifically, how does the batch size affect the representation of the data? As you can imagine, the smaller the mini-batch the less representative of the total input. In the image below you can see that four nets were trained using different batch sizes, 5, 10, 50 and no batch normalization.\nWe see that bigger the batch size, better the results. The problem is that in supervised learning, it’s really expensive to train over the whole training but at the time is less effective to the batch normalization to use small batches. Moreover, in networks where the mini-batches are forced to be small (online training, RNN) the results of BN are poor even compared with no BN networks (see the mini-batch of 5 samples). This is because the 𝜇 and 𝜎 of the data can’t be properly estimated and differs from the one used in BN.\nLayer Normalization Layer normalization was conceived as an intent to adresse the aforementioned problems and restrictions of BN. The paper Layer Normalization proposed to modify batch normalization and implemented the normalization across the layer instead across the mini-batch according to the following implementation:\n$$ \\mu_l = \\frac{1}{H}\\sum_{i=1}^{H}a_i^l \\hspace{1cm} \\sigma_l=\\sqrt{\\frac{1}{H}\\sum_{i=1}^{H}(a_i^l-\\mu_l)^2} $$\nHere \\(H\\) denotes the number of hidden units in a layer. Here we can see that in difference to the batch normalization formulation, \\(\\mu_l\\) and \\(\\sigma_l\\) are shared across all the hidden layers but different training inputs will have different normalization terms. A benefit of this set up is that it doesn’t depend on the size of the inputs so layer normalization is applied in the same way when training and testing. As the authors mention “Unlike batch normalization, layer normalization does not impose any constraint on the size of a mini-batch and it can be used in the pure online regime with batch size 1.”\nImplementation and Results The implementation is really similar to batch normalization but now the statistics are caulculated across the layer. This means that if we have an input \\(X\\) of dimensions \\((N, D)\\) we will compute the mean over \\(D\\) having an output of dimension \\((N,)\\)\nAs the code is really similar as you can see in the block code below. In this case as before it’s a good advice to follow up the dimension of each transformation to the input.\ndef layernorm_forward(x, gamma, beta):  ''' Inputs: - x: Data of shape (N,D) - gamma, beta: Scale and shift of shape (N,) Out: - out = Normalized inputs (N,D) - cache = Useful intermediate values '''  eps = 1e-5   # Forward pass  mu = np.mean(x, axis=1, keepdims=True) # mean (N,1)  var = np.var(x, axis=1, keepdims=True) # var (N,1)  var_inv = 1 / np.sqrt(var + eps) # inverse of var (N,1)  x_mu = x - mu # inputs minus mean (N,D)  x_norm = x_mu * var_inv # normalized inputs (N,D)  out = gamma * x_norm + beta # scale and shifts (N,D)   cache = (gamma, x_norm, x_mu, var_inv) Using the code above, the backward pass function is an easy exercise. You can see my implementation here on my GitHub. Now let’s visualize how layer normalization behaves in practice.\nIn the figure above, four fully connected nets were trained using layer normalization with different batch sizes, 5, 10, 50 and no layer normalization. We can see in comparison to the nets trained using batch normalization the number of samples in the batch improves only a little the performance and the method doesn’t rely on this setting. We can see that the model trained with the smallest mini-batch performs better than the one without any normalization.\nIt’s important to note that this method also can have some problems if the dimension of features is small the values of 𝜇 and 𝜎 will be noisy and will not represent well the data.\nGroup Normalization This recent work focuses on the fact that batch normalization performs better than layer normalization when used in convolutional neural networks. The problem is that the dependence of BN in the batch size makes it inefficient for ConvNets. We know that BN is computational expensive and since ConvNets are generally used to image recognition with high definition images usign it to train them may be not a good idea.\nThe authors argued that when using layer normalization all the neurons in a hidden layer have the same contribution to the final output but in ConvNets this doesn’t happen since the neurons whose receptive fields are in the border of an image are rarely turned on. They proposed a modification of the layer normalization method dividing the sample into G different groups and performing the normalization\nSpatial Normalization / Spatial Group Normalization First we will come back a little to the paper of BN to understand how to apply it to ConvNets. It’s necessary to modify a little the function since in the last one we were expecting an input \\(X\\) of dimensions \\((N, D)\\) but when working with images the input is generally of dimensions \\((N, C, H, W)\\) where N is the number of samples, C the channels (RBG) and \\((H, W)\\) the height and width of the feature map.\nThe following implementation shows the forward pass function for the spatial normalization. We reuse the batch normalization forward pass function changing a little the dimension of the matriz. The good question here is, which transformations must be done to a \\((N,C,H,W)\\) matrix to convert it to a \\((N,C)\\) matrix? The backward pass is analogous and you can find it here.\ndef spatial_batchnorm_forward(x, gamma, beta, mode):  ''' Inputs: - x: (N, C, H, W) - gama, beta: (C,) - mode: train/test Out: - out: (N, C, H, W) - cache '''  N, C, H, W = x.shape   # Forward pass  x_vec = np.transpose(x, (0,2,3,1)).reshape(-1,C)\t# Reshape x - (N, C)  out, cache = batchnorm_forward(x_vec, gamma, beta, mode)  out = np.transpose(np.reshape(out, (N,H,W,C)), (0,3,1,2))   return out, cache What the authors of group normalization proposed was to use a similar transformation to modify the layer normalization algorithm. The following code block proposes a spatial group normalization. As you can see, the function is pretty similar to the one for layer normalization but now the dimensions of the tensor are different. Again, the backward pass is straightforward but in the case you need it you can find it on my GitHub in this link.\ndef spatial_groupnorm_forward(x, gamma, beta):  ''' Inputs: - x: (N, C, H, W) - gamma, beta: (C,) - G: int number of groups. Should be divisor of C Out: - out: (N, C, H, W) - cache '''  eps = 1e-5   # Forward pass  x_g = np.reshape(x, (x.shape[0]*G, -1)) # N*G,H*W*(C/G)  mu = np.mean(x_g, axis=1, keepdims=True) # N*G,1  var = np.var(x_g, axis=1, keepdims=True) # N*G,1  var_inv = 1 / np.sqrt(var + eps) # N*G,1  x_mu = x_g - mu # N*G,H*W*(C/G)  x_norm = x_mu * var_inv # N*G,H*W*(C/G)  x_norm = np.reshape(x_norm, x.shape) # (N,C,H,W)  out = gamma * x_norm + beta   cache = (gamma, x_norm, x_mu, var_inv)   return out, cache GN Performance In the following figure from the paper, there are four different models’s error vs epoch curves. The models were trained each one with a normalization technique, on the right the results for the training data and on the right for the validation data. We can see that the group normalization has a better performance than all the other normalization methods while training and during validation is only outperformed by BN.\nAs future work, the authors proposed to see the development of this model into recurrent and generative neural networks as it’s related to layer normalization. They also mentioned that the current available models are fine-tuned to be used with batch normalization and that this can bias the results explaining the better performance of BN, so a re-design of the state-of-the-art learning systems to focus on GN may improve the results.\nConclusion Training neural networks using SGD is a complex task. There are different ways to improve the efficiency while training these algorithms and reparametrization of the inputs has been an effective way to do it. Batch normalization makes possible faster convergences, higher learning rates and the use of saturating functions without the fear of saturation when poor initialization was done.\nHowever, the dependency of the algorithm on the mini-batch size makes it computational expensive and inappropriate for online learning or RNNs. Layer normalization tried to face this flaw having excellent results normalizing over the hidden neurons of a layer instead over all the training batch.\nFinally Group normalization, took the ideas of layer normalization and applied them to ConvNets. They segmented the units of a hidden layer in different groups and computed the normalization for each of them. The results outperformed the layer normalization techniques.\nReferences [1] Batch Normalization by Sergey Ioffe and Christian Szegedy\n[2] Layer Normalization by Jimmy Lei Ba and Jamie Ryan Kiros and Geoffrey E. Hinton\n[3] Group Normalization by Yuxin Wu and Kaiming He\n[4] Deep Learning by Ian Goodfellow, and Yoshua Bengio and Aaron Courville\n[5] CS231n: CNN for Visual Recognition\nThis post code functions are from my answers to the assigment 2 of the course CS231n.\n",
+  "wordCount" : "3166",
+  "inLanguage": "en",
+  "datePublished": "2020-05-20T16:34:50+02:00",
+  "dateModified": "2020-05-20T16:34:50+02:00",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "http://example.org/blog/normalizations/"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Isra Salazar",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "http://example.org/favicon.ico"
+    }
+  }
+}
+</script>
+</head>
+
+<body class="" id="top">
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+
+<header class="header">
+    <nav class="nav">
+        <div class="logo">
+            <a href="http://example.org/" accesskey="h" title="Isra Salazar (Alt + H)">Isra Salazar</a>
+            <span class="logo-switches">
+                <button id="theme-toggle" accesskey="t" title="(Alt + T)">
+                    <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </span>
+        </div>
+        <ul id="menu">
+            <li>
+                <a href="http://example.org/blog/" title="Blog">
+                    <span>Blog</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://example.org/about/" title="About">
+                    <span>About</span>
+                </a>
+            </li>
+            <li>
+                <a href="http://example.org/israfel_salazar_resume.pdf" title="Resume">
+                    <span>Resume</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</header>
+<main class="main">
+
+<article class="post-single">
+  <header class="post-header">
+    
+    <h1 class="post-title">
+      Understanding Batch, Layer and Group Normalization
+    </h1>
+    <div class="post-meta"><span title='2020-05-20 16:34:50 +0200 CEST'>May 20, 2020</span>
+
+</div>
+  </header> 
+  <div class="post-content"><blockquote>
+<p>This post is an analysis of the actual normalization techniques and why and how to implement them for neural networks. It&rsquo;s based on the paper of Ioffee and Szegedy <a href="https://arxiv.org/abs/1502.03167">[1]</a> from 2015, the modification proposed for Layer Normalization <a href="https://arxiv.org/abs/1607.06450">[2]</a> and a much more recent work of Group Normalization <a href="https://arxiv.org/abs/1803.08494">[3]</a>.</p>
+<p><em>Batch Normalization (BN) is a milestone technique in the development of deep learning. - Group Normalization paper.</em></p>
+</blockquote>
+<hr>
+<p>One of the big difficulties of deep neural networks is the training stage and its optimization. In general, training a stochastic gradient descent (SGD) is not a simple task because of its sensitivity to changes in the hyperparameters, as the learning rate, weights initialization and also because of the dependence of each layer on the parameters of the previous one. A way to improve this process is to use different and sophisticated optimizers, as some of the ones shown in this <a href="https://arxiv.org/abs/1609.04747">overview paper</a>. Another approach, the one we will review in this post, is to modify the network&rsquo;s architecture adding some normalization layers.</p>
+
+
+<img src="/blog/normalizations/normalizations.png" alt="normalizations" title="Normalizations"
+     style="zoom:50%; margin-left: auto; margin-right: auto;">
+
+<h2 id="batch-normalization">Batch Normalization<a hidden class="anchor" aria-hidden="true" href="#batch-normalization">#</a></h2>
+<h3 id="the-problem-internal-covariate-shift">The Problem: Internal Covariate Shift<a hidden class="anchor" aria-hidden="true" href="#the-problem-internal-covariate-shift">#</a></h3>
+<p>As an attempt to make the training step more efficient, Ioffe and Szegedy published in 2015 a reparametrization technique that they called batch normalization. They hypothesized that one of the reasons for the difficulty of training neural networks was the <em>Internal Covariate Shift</em> and that reducing it will make the training easier and the convergence faster.</p>
+<p>A change to the input distribution of a learning system is called covariance shift and it happens that inside a neural network the input distribution of each layer is constantly changing during the training step, hence internal covariate shift. This is because when using stochastic gradient to train deep neural networks the weights of each layer update under the assumption that all the other weights remain unchanged. However, in practice they are all updated at the same time causing the distribution to constantly change. This forces the neurons to not only learn the parameters for the needed task but also to adapt themselves to these changes on the input distribution.</p>
+<h3 id="the-algorithm">The Algorithm<a hidden class="anchor" aria-hidden="true" href="#the-algorithm">#</a></h3>
+<p>Based on the idea that apply a whitening preprocessing, normalization plus decorrelation to the input data reduce the covariate shift and make machine learning systems work better, and that any transformation applied to the inputs of a network can also be applied to a sub-network, to reduce the internal covariate shift they proposed put whitening activations at every training step or after some interval to modify the parameters.</p>
+<p>They took two important simplifications: Since the whitening process is expensive and apply it to several layers is computational expensive, they proposed only to apply normalization, meaning inputs will have zero mean and variance of 1 but they won&rsquo;t be decorrelated and the second simplification is that they will use mini-batches to estimate the mean and variance of the whole input because the gradient descent algorithms works better with mini-batches. And important must! The normalization layer needs to be differentiable so the SGD algorithm can take the changes into account during the backward pass.</p>
+<p>The idea is really straightforward as shown in the image below from the paper.</p>
+
+
+<img src="/blog/normalizations/algorithm.png" alt="Algorithm" title="Algorithm" 
+     style="zoom:50%; margin-left: auto; margin-right: auto;">
+
+<p>A bit of explanation: Taking the input mini-batch \(B = {x_1, x_2, .., x_l}\)</p>
+<ol>
+<li>We compute the mean of the mini-batch \(\mu_B\). Here it is important to notice that if the dimensions of \(B\) are \((N,D)\) with \(N\) the number of inputs and \(D\) the features of each input, we will compute the mean over \(N\) with an output of dimension \((D, )\).</li>
+<li>Using the mean, we compute the variance \(\sigma^{2}_{B}\). Note that the variance here is also across \(N\).</li>
+<li>Calculate the normalized input \(\hat x_i\). In the equation we add an epsilon term commonly set as \(\epsilon = 1e-5\) just to avoid division by zero when \(\sigma^2_B = 0\).</li>
+<li>Finally we add two learnable parameters \(\gamma\) and \(\beta\) that shift and scale the output. They are introduced to moderate the effect of the normalization so the net can have the same power of representation (sometimes is useful to not have zero mean and variance of 1. For example, in the case that the net doesn&rsquo;t need the normalization it will learn \(\gamma=\sqrt{\sigma^2_B+\epsilon}\) and \(\beta=\frac{\mu_B}{\sqrt{\sigma^2_B+\epsilon}}\).</li>
+</ol>
+<h3 id="implementation">Implementation<a hidden class="anchor" aria-hidden="true" href="#implementation">#</a></h3>
+<p>The moment you were waiting for! Let&rsquo;s code and start from a vanilla implementation of the forward pass for an input \(x\) of dimensions \((N, D)\) using the algorithm described above. An useful tip here is to follow up the dimensions of the transformation and the steps taken to compute the output.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">batchnorm_forward</span>(x, gamma, beta):
+</span></span><span style="display:flex;"><span>  <span style="color:#e6db74">&#39;&#39;&#39;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  Inputs:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  - x: Data of shape (N,D)
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  - gamma, beta: Scale and shift of shape (D,)
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">	Out:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">	- out = Normalized inputs (N,D)
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">	- cache = Useful intermediate values
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  &#39;&#39;&#39;</span>
+</span></span><span style="display:flex;"><span>  eps <span style="color:#f92672">=</span> <span style="color:#ae81ff">1e-5</span>
+</span></span><span style="display:flex;"><span>  
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">#Forward pass</span>
+</span></span><span style="display:flex;"><span>  mu <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>mean(x, axis<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>) <span style="color:#75715e"># mean (D,)</span>
+</span></span><span style="display:flex;"><span>  var <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>var(x, axis<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>) <span style="color:#75715e"># var (D,)</span>
+</span></span><span style="display:flex;"><span>  var_inv <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span> <span style="color:#f92672">/</span> np<span style="color:#f92672">.</span>sqrt(var <span style="color:#f92672">+</span> eps) <span style="color:#75715e"># inverse of var (D,)</span>
+</span></span><span style="display:flex;"><span>  x_mu <span style="color:#f92672">=</span> x <span style="color:#f92672">-</span> mu <span style="color:#75715e"># input minus mean (N,D)</span>
+</span></span><span style="display:flex;"><span>  x_norm <span style="color:#f92672">=</span> x_mu <span style="color:#f92672">*</span> var_inv <span style="color:#75715e"># nomalized input (N,D)</span>
+</span></span><span style="display:flex;"><span>  out <span style="color:#f92672">=</span> gamma <span style="color:#f92672">*</span> x_norm <span style="color:#f92672">+</span> beta <span style="color:#75715e"># scale and shift (N,D)</span>
+</span></span><span style="display:flex;"><span>  
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># Cache: Tupple needed for the backward pass</span>
+</span></span><span style="display:flex;"><span>	cache <span style="color:#f92672">=</span> (gamma, x_norm, x_mu, var_inv)
+</span></span><span style="display:flex;"><span>  
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> out, cache
+</span></span></code></pre></div><h4 id="backward-pass">Backward Pass<a hidden class="anchor" aria-hidden="true" href="#backward-pass">#</a></h4>
+<p>The vanilla implementation of the forward pass can help us to build the backward pass following each step. It is a little complicated due to the mixed branches of the graph and a useful exercise is to draw the graph and use the chain rule to calculate the derivative for each node. I attached an image from the course CS231n of Stanford that shows the graph for a forward/backward pass.</p>
+
+
+<img src="https://raw.githubusercontent.com/cs231n/cs231n.github.io/master/assets/a2/batchnorm_graph.png" title="Backprop"
+     style="zoom:40%; margin-left: auto; margin-right: auto;">
+
+<p>In the function we will receive \(\frac{dL}{dY}\) and we will need to compute \(\frac{dL}{dX}, \frac{dL}{d\gamma}, \frac{dL}{d\beta}\)  using the chain rule, \(\frac{dL}{dX}=\frac{dL}{dY}\frac{dY}{dX}\)  and the intermediate values we saved in the cache variable. Again, it&rsquo;s useful to follow up the change in the dimensions of the vectors to be sure that our calculations are good.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">batchnorm_backward</span>(dout, cache):
+</span></span><span style="display:flex;"><span>  <span style="color:#e6db74">&#39;&#39;&#39;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  Inputs:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  - dout: upstream derivate
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  - cache: variables for intermediate derivates
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  Outputs:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  dx, dgamma, dbeta: dLoss with respect to each variable
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  &#39;&#39;&#39;</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># Unpack cache variables</span>
+</span></span><span style="display:flex;"><span>	gamma, x_norm, x_mu, var_inv <span style="color:#f92672">=</span> cache
+</span></span><span style="display:flex;"><span>  N <span style="color:#f92672">=</span> dout<span style="color:#f92672">.</span>shape[<span style="color:#ae81ff">0</span>]
+</span></span><span style="display:flex;"><span>  
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># Backward pass</span>
+</span></span><span style="display:flex;"><span>  dgamma <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>sum(dout <span style="color:#f92672">*</span> x_norm, axis<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>) <span style="color:#75715e"># N,D -&gt; D, </span>
+</span></span><span style="display:flex;"><span>  dxnorm <span style="color:#f92672">=</span> dout <span style="color:#f92672">*</span> gamma <span style="color:#75715e"># N,D -&gt; N,D</span>
+</span></span><span style="display:flex;"><span>  dbeta <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>sum(dout, axis<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>) <span style="color:#75715e"># N,D -&gt; D,</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  dxmu <span style="color:#f92672">=</span> dxnorm <span style="color:#f92672">*</span> var_inv  <span style="color:#75715e"># N,D -&gt; N,D </span>
+</span></span><span style="display:flex;"><span>  dvar_inv <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>sum(dxnorm <span style="color:#f92672">*</span> x_mu, axis<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>)  <span style="color:#75715e"># N,D -&gt; D,</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  dvar <span style="color:#f92672">=</span> dvar_inv <span style="color:#f92672">*</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">0.5</span> <span style="color:#f92672">*</span> var_inv <span style="color:#f92672">**</span> <span style="color:#ae81ff">3</span> <span style="color:#75715e"># D,</span>
+</span></span><span style="display:flex;"><span>  dx <span style="color:#f92672">=</span> dxmu
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  dxmu <span style="color:#f92672">+=</span> dvar <span style="color:#f92672">*</span> <span style="color:#ae81ff">2</span><span style="color:#f92672">/</span>N <span style="color:#f92672">*</span> x_mu
+</span></span><span style="display:flex;"><span>  dmu <span style="color:#f92672">=</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span> <span style="color:#f92672">*</span> np<span style="color:#f92672">.</span>sum(dxmu, axis<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  dx <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span><span style="color:#f92672">/</span>N <span style="color:#f92672">*</span> dmu
+</span></span><span style="display:flex;"><span>  
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> dx, dgamma, dbeta
+</span></span></code></pre></div><p>Another way to implement the backward pass is to use the numeric calculation for the derivative. After some mathematical workout you should be able to reach equations like the ones shown in the paper and in the figure below. If you are interested you can see the implementation of this function on my GitHub on this <a href="https://github.com/israfelsr/CS231n/blob/3761cb8ef81149f9afa5819922c82c4fb8a699e4/assignment2/cs231n/layers.py#L305-L346">link</a>. Implementing the backward pass using simplify gradients should be a little faster than the implementation shown above. On <a href="https://github.com/israfelsr/CS231n/blob/master/assignment2/BatchNormalization.ipynb">this notebook</a> you can see a comparison of both where the simplify function is 13% faster.</p>
+
+
+<img src="/blog/normalizations/derivatives.png" alt="Derivatives" title="Derivatives"
+     style="zoom:60%; margin-left: auto; margin-right: auto;">
+
+<h4 id="forward-pass-testing-time">Forward Pass: Testing Time<a hidden class="anchor" aria-hidden="true" href="#forward-pass-testing-time">#</a></h4>
+<p>Although the function above for the forward pass is useful for building the backward pass, it has some flaws. In particular let&rsquo;s take into account the second simplification that the authors do: the batch normalization algorithm uses the mean and variance of a mini-batch waiting that it would be representative of the input. But what happens during testing time? The input now is small, so the values won&rsquo;t be representative.</p>
+<p>To solve this we will use an exponentially decaying running mean and a running variance saved from the training time and during testing time we will normalize the inputs with these values of mean and variance. For the decaying rate we will use a momentum constant set commonly as \(\rho = 0.9\).</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">batchnorm_forward</span>(x, gamma, beta, mode):
+</span></span><span style="display:flex;"><span>  <span style="color:#e6db74">&#39;&#39;&#39;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  Inputs:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  - x: Data of shape (N,D)
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  - gamma, beta: Scale and shift of shape (D,)
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  - mode: train or test str
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">	Out:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">	- out = Normalized inputs (N,D)
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">	- cache = Useful intermediate values
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  &#39;&#39;&#39;</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># Unpacking the parameters	# Change btw train and test</span>
+</span></span><span style="display:flex;"><span>  N, D <span style="color:#f92672">=</span> x<span style="color:#f92672">.</span>shape
+</span></span><span style="display:flex;"><span>	momentum <span style="color:#f92672">=</span> <span style="color:#ae81ff">0.9</span> <span style="color:#75715e"># Setting the momentum constant</span>
+</span></span><span style="display:flex;"><span>  
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># Initialization of mean/var for testing step</span>
+</span></span><span style="display:flex;"><span>  running_mean <span style="color:#f92672">=</span> bn_param<span style="color:#f92672">.</span>get(<span style="color:#e6db74">&#34;running_mean&#34;</span>, np<span style="color:#f92672">.</span>zeros(D, dtype<span style="color:#f92672">=</span>x<span style="color:#f92672">.</span>dtype))
+</span></span><span style="display:flex;"><span>  running_var <span style="color:#f92672">=</span> bn_param<span style="color:#f92672">.</span>get(<span style="color:#e6db74">&#34;running_var&#34;</span>, np<span style="color:#f92672">.</span>zeros(D, dtype<span style="color:#f92672">=</span>x<span style="color:#f92672">.</span>dtype))
+</span></span><span style="display:flex;"><span>  
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">if</span> mode <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;train&#39;</span>:
+</span></span><span style="display:flex;"><span>   	<span style="color:#75715e">### Perform batch normalization as before</span>
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># Adding the mean and var to the running mean</span>
+</span></span><span style="display:flex;"><span>		running_mean <span style="color:#f92672">=</span> momentum <span style="color:#f92672">*</span> running_mean <span style="color:#f92672">+</span> (<span style="color:#ae81ff">1</span> <span style="color:#f92672">-</span> momentum) <span style="color:#f92672">*</span> mu
+</span></span><span style="display:flex;"><span>		running_var <span style="color:#f92672">=</span> momentum <span style="color:#f92672">*</span> running_var <span style="color:#f92672">+</span> (<span style="color:#ae81ff">1</span> <span style="color:#f92672">-</span> momentum) <span style="color:#f92672">*</span> var
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>		<span style="color:#75715e"># Store the updated running means back into bn_param</span>
+</span></span><span style="display:flex;"><span>    bn_param[<span style="color:#e6db74">&#34;running_mean&#34;</span>] <span style="color:#f92672">=</span> running_mean
+</span></span><span style="display:flex;"><span>    bn_param[<span style="color:#e6db74">&#34;running_var&#34;</span>] <span style="color:#f92672">=</span> running_var
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>   <span style="color:#66d9ef">if</span> mode <span style="color:#f92672">==</span> <span style="color:#e6db74">&#39;test&#39;</span>:
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e"># Normalizing inputs with the saved data</span>
+</span></span><span style="display:flex;"><span>    x_norm <span style="color:#f92672">=</span> (x <span style="color:#f92672">-</span> running_mean) <span style="color:#f92672">/</span> np<span style="color:#f92672">.</span>sqrt(running_var <span style="color:#f92672">+</span> eps)
+</span></span><span style="display:flex;"><span>		out <span style="color:#f92672">=</span> gamma <span style="color:#f92672">*</span> x_norm <span style="color:#f92672">+</span> beta
+</span></span><span style="display:flex;"><span>    
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> out, cache
+</span></span><span style="display:flex;"><span>      
+</span></span></code></pre></div><p>You can see the complete version of this function on my GitHub account as part of my solutions for the assignment 2 of the Stanford course CS231n <a href="https://github.com/israfelsr/CS231n/blob/3761cb8ef81149f9afa5819922c82c4fb8a699e4/assignment2/cs231n/layers.py#L141-L250">here</a>.</p>
+<h3 id="batchnorm-results">BatchNorm Results<a hidden class="anchor" aria-hidden="true" href="#batchnorm-results">#</a></h3>
+<p>You may be wondering how much better it is to train a network with batch normalization and how it compares with another trained without it. As an experiment, I trained two 6-Layer Fully Connected Net on the CIFAR-10 Dataset with a batch size of 50 during 10 epochs, one with batch normalization and another without. The training loss for each of them are shown in the figure below where we can see that the model trained with batch normalization, the blue one, converges faster than one without it.</p>
+
+
+<img src="/blog/normalizations/batch_vs_nobatch.png" alt="batch_vs_nobatch" 
+     title="Batchnorm Training" style="zoom:100%; margin-left: auto; margin-right: auto;">
+
+<p>So it&rsquo;s true that batch normalization improves the training of a fully connected neural net. But, the second simplification has an important side effect: what happens if the mini-batch isn&rsquo;t representative of the input data? And more specifically, how does the batch size affect the representation of the data? As you can imagine, the smaller the mini-batch the less representative of the total input. In the image below you can see that four nets were trained using different batch sizes, 5, 10, 50 and no batch normalization.</p>
+<p>We see that bigger the batch size, better the results. The problem is that in supervised learning, it&rsquo;s really expensive to train over the whole training but at the time is less effective to the batch normalization to use small batches. Moreover, in networks where the mini-batches are forced to be small (online training, RNN) the results of BN are poor even compared with no BN networks (see the mini-batch of 5 samples). This is because the 𝜇 and 𝜎 of the data can&rsquo;t be properly estimated and differs from the one used in BN.</p>
+
+
+<img src="/blog/normalizations/batch_vs_batchsize.png" alt="Batch size"
+     title="Batchnorm Batch Size Dependence" style="margin-left: auto; margin-right: auto;">
+
+<h2 id="layer-normalization">Layer Normalization<a hidden class="anchor" aria-hidden="true" href="#layer-normalization">#</a></h2>
+<p>Layer normalization was conceived as an intent to adresse the aforementioned problems and restrictions of BN. The paper Layer Normalization proposed to modify batch normalization and implemented the normalization across the layer instead across the mini-batch according to the following implementation:</p>
+<p>$$
+\mu_l = \frac{1}{H}\sum_{i=1}^{H}a_i^l \hspace{1cm} \sigma_l=\sqrt{\frac{1}{H}\sum_{i=1}^{H}(a_i^l-\mu_l)^2}
+$$</p>
+<p>Here \(H\) denotes the number of hidden units in a layer. Here we can see that in difference to the batch normalization formulation, \(\mu_l\) and \(\sigma_l\) are shared across all the hidden layers but different training inputs will have different normalization terms. A benefit of this set up is that it doesn&rsquo;t depend on the size of the inputs so layer normalization is applied in the same way when training and testing. As the authors mention <em>&ldquo;Unlike batch normalization, layer normalization does not impose any constraint on the size of a mini-batch and it can be used in the pure online regime with batch size 1.&rdquo;</em></p>
+<h3 id="implementation-and-results">Implementation and Results<a hidden class="anchor" aria-hidden="true" href="#implementation-and-results">#</a></h3>
+<p>The implementation is really similar to batch normalization but now the statistics are caulculated across the layer. This means that if we have an input \(X\) of dimensions \((N, D)\) we will compute the mean over \(D\) having an output of dimension \((N,)\)</p>
+<p>As the code is really similar as you can see in the block code below. In this case as before it&rsquo;s a good advice to follow up the dimension of each transformation to the input.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">layernorm_forward</span>(x, gamma, beta):
+</span></span><span style="display:flex;"><span>  <span style="color:#e6db74">&#39;&#39;&#39;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  Inputs:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  - x: Data of shape (N,D)
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  - gamma, beta: Scale and shift of shape (N,)
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">	Out:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">	- out = Normalized inputs (N,D)
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">	- cache = Useful intermediate values
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  &#39;&#39;&#39;</span>
+</span></span><span style="display:flex;"><span>  eps <span style="color:#f92672">=</span> <span style="color:#ae81ff">1e-5</span>
+</span></span><span style="display:flex;"><span>  
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># Forward pass</span>
+</span></span><span style="display:flex;"><span>  mu <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>mean(x, axis<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>, keepdims<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>) <span style="color:#75715e"># mean (N,1)</span>
+</span></span><span style="display:flex;"><span>  var <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>var(x, axis<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>, keepdims<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>) <span style="color:#75715e"># var (N,1)</span>
+</span></span><span style="display:flex;"><span>  var_inv <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span> <span style="color:#f92672">/</span> np<span style="color:#f92672">.</span>sqrt(var <span style="color:#f92672">+</span> eps) <span style="color:#75715e"># inverse of var (N,1)</span>
+</span></span><span style="display:flex;"><span>  x_mu <span style="color:#f92672">=</span> x <span style="color:#f92672">-</span> mu <span style="color:#75715e"># inputs minus mean (N,D)</span>
+</span></span><span style="display:flex;"><span>  x_norm <span style="color:#f92672">=</span> x_mu <span style="color:#f92672">*</span> var_inv <span style="color:#75715e"># normalized inputs (N,D)</span>
+</span></span><span style="display:flex;"><span>  out <span style="color:#f92672">=</span> gamma <span style="color:#f92672">*</span> x_norm <span style="color:#f92672">+</span> beta <span style="color:#75715e"># scale and shifts (N,D)</span>
+</span></span><span style="display:flex;"><span>  
+</span></span><span style="display:flex;"><span>  cache <span style="color:#f92672">=</span> (gamma, x_norm, x_mu, var_inv)
+</span></span></code></pre></div><p>Using the code above, the backward pass function is an easy exercise. You can see my implementation <a href="https://github.com/israfelsr/CS231n/blob/3761cb8ef81149f9afa5819922c82c4fb8a699e4/assignment2/cs231n/layers.py#L400-L448">here</a> on my GitHub. Now let&rsquo;s visualize how layer normalization behaves in practice.</p>
+<!-- raw HTML omitted -->
+<p>In the figure above, four fully connected nets were trained using layer normalization with different batch sizes, 5, 10, 50 and no layer normalization. We can see in comparison to the nets trained using batch normalization the number of samples in the batch improves only a little the performance and the method doesn&rsquo;t rely on this setting. We can see that the model trained with the smallest mini-batch performs better than the one without any normalization.</p>
+<p>It&rsquo;s important to note that this method also can have some problems if <strong>the dimension of features is small the values of 𝜇 and 𝜎 will be noisy and will not represent well the data.</strong></p>
+<h2 id="group-normalization">Group Normalization<a hidden class="anchor" aria-hidden="true" href="#group-normalization">#</a></h2>
+<p>This recent work focuses on the fact that batch normalization performs better than layer normalization when used in convolutional neural networks. The problem is that the dependence of BN in the batch size makes it inefficient for ConvNets. We know that BN is computational expensive and since ConvNets are generally used to image recognition with high definition images usign it to train them may be not a good idea.</p>
+<p>The authors argued that when using layer normalization all the neurons in a hidden layer have the same contribution to the final output but in ConvNets this doesn&rsquo;t happen since the neurons whose receptive fields are in the border of an image are rarely turned on. They proposed a modification of the layer normalization method dividing the sample into G different groups and performing the normalization</p>
+<h3 id="spatial-normalization--spatial-group-normalization">Spatial Normalization / Spatial Group Normalization<a hidden class="anchor" aria-hidden="true" href="#spatial-normalization--spatial-group-normalization">#</a></h3>
+<p>First we will come back a little to the paper of BN to understand how to apply it to ConvNets. It&rsquo;s necessary to modify a little the function since in the last one we were expecting an input \(X\) of dimensions \((N, D)\) but when working with images the input is generally of dimensions \((N, C, H, W)\) where N is the number of samples, C the channels (RBG) and \((H, W)\) the height and width of the feature map.</p>
+<p>The following implementation shows the forward pass function for the spatial normalization. We reuse the batch normalization forward pass function changing a little the dimension of the matriz. The good question here is, which transformations must be done to a \((N,C,H,W)\) matrix to convert it to a \((N,C)\) matrix? The backward pass is analogous and you can find it <a href="https://github.com/israfelsr/CS231n/blob/3761cb8ef81149f9afa5819922c82c4fb8a699e4/assignment2/cs231n/layers.py#L817-L851">here</a>.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">spatial_batchnorm_forward</span>(x, gamma, beta, mode):
+</span></span><span style="display:flex;"><span>  <span style="color:#e6db74">&#39;&#39;&#39;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  Inputs:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  - x: (N, C, H, W)
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  - gama, beta: (C,)
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  - mode: train/test
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  Out:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  - out: (N, C, H, W)
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  - cache
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  &#39;&#39;&#39;</span>
+</span></span><span style="display:flex;"><span>  N, C, H, W <span style="color:#f92672">=</span> x<span style="color:#f92672">.</span>shape
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># Forward pass</span>
+</span></span><span style="display:flex;"><span>  x_vec <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>transpose(x, (<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">2</span>,<span style="color:#ae81ff">3</span>,<span style="color:#ae81ff">1</span>))<span style="color:#f92672">.</span>reshape(<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>,C)	<span style="color:#75715e"># Reshape x -&gt; (N, C)</span>
+</span></span><span style="display:flex;"><span>  out, cache  <span style="color:#f92672">=</span> batchnorm_forward(x_vec, gamma, beta, mode)
+</span></span><span style="display:flex;"><span>  out <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>transpose(np<span style="color:#f92672">.</span>reshape(out, (N,H,W,C)), (<span style="color:#ae81ff">0</span>,<span style="color:#ae81ff">3</span>,<span style="color:#ae81ff">1</span>,<span style="color:#ae81ff">2</span>))
+</span></span><span style="display:flex;"><span>  
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> out, cache
+</span></span></code></pre></div><p>What the authors of group normalization proposed was to use a similar transformation to modify the layer normalization algorithm. The following code block proposes a spatial group normalization. As you can see, the function is pretty similar to the one for layer normalization but now the dimensions of the tensor are different. Again, the backward pass is straightforward but in the case you need it you can find it on my GitHub in this <a href="https://github.com/israfelsr/CS231n/blob/3761cb8ef81149f9afa5819922c82c4fb8a699e4/assignment2/cs231n/layers.py#L854-L899">link</a>.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-python" data-lang="python"><span style="display:flex;"><span><span style="color:#66d9ef">def</span> <span style="color:#a6e22e">spatial_groupnorm_forward</span>(x, gamma, beta):
+</span></span><span style="display:flex;"><span>  <span style="color:#e6db74">&#39;&#39;&#39;
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  Inputs:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  - x: (N, C, H, W)
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  - gamma, beta: (C,)
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  - G: int number of groups. Should be divisor of C
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  Out: 
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  - out: (N, C, H, W)
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  - cache
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">  &#39;&#39;&#39;</span>
+</span></span><span style="display:flex;"><span>  eps <span style="color:#f92672">=</span> <span style="color:#ae81ff">1e-5</span>
+</span></span><span style="display:flex;"><span>  
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e"># Forward pass</span>
+</span></span><span style="display:flex;"><span>  x_g <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>reshape(x, (x<span style="color:#f92672">.</span>shape[<span style="color:#ae81ff">0</span>]<span style="color:#f92672">*</span>G, <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>))  <span style="color:#75715e"># N*G,H*W*(C/G)</span>
+</span></span><span style="display:flex;"><span>  mu <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>mean(x_g, axis<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>, keepdims<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>) <span style="color:#75715e"># N*G,1</span>
+</span></span><span style="display:flex;"><span>  var <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>var(x_g, axis<span style="color:#f92672">=</span><span style="color:#ae81ff">1</span>, keepdims<span style="color:#f92672">=</span><span style="color:#66d9ef">True</span>) <span style="color:#75715e"># N*G,1</span>
+</span></span><span style="display:flex;"><span>  var_inv <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span> <span style="color:#f92672">/</span> np<span style="color:#f92672">.</span>sqrt(var <span style="color:#f92672">+</span> eps) <span style="color:#75715e"># N*G,1</span>
+</span></span><span style="display:flex;"><span>  x_mu <span style="color:#f92672">=</span> x_g <span style="color:#f92672">-</span> mu <span style="color:#75715e"># N*G,H*W*(C/G)</span>
+</span></span><span style="display:flex;"><span>  x_norm <span style="color:#f92672">=</span> x_mu <span style="color:#f92672">*</span> var_inv <span style="color:#75715e"># N*G,H*W*(C/G)</span>
+</span></span><span style="display:flex;"><span>  x_norm <span style="color:#f92672">=</span> np<span style="color:#f92672">.</span>reshape(x_norm, x<span style="color:#f92672">.</span>shape) <span style="color:#75715e"># (N,C,H,W)</span>
+</span></span><span style="display:flex;"><span>  out <span style="color:#f92672">=</span> gamma <span style="color:#f92672">*</span> x_norm <span style="color:#f92672">+</span> beta
+</span></span><span style="display:flex;"><span>  
+</span></span><span style="display:flex;"><span>  cache <span style="color:#f92672">=</span> (gamma, x_norm, x_mu, var_inv) 
+</span></span><span style="display:flex;"><span>  
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> out, cache
+</span></span></code></pre></div><h3 id="gn-performance">GN Performance<a hidden class="anchor" aria-hidden="true" href="#gn-performance">#</a></h3>
+<p>In the following figure from the paper, there are four different models&rsquo;s error vs epoch curves. The models were trained each one with a normalization technique, on the right the results for the training data and on the right for the validation data. We can see that the group normalization has a better performance than all the other normalization methods while training and during validation is only outperformed by BN.</p>
+
+
+<img src="/blog/normalizations/group_results.png" alt="Group Results" 
+     title="Groupnorm Results" style="margin-left: auto; margin-right: auto;">
+
+<p>As future work, the authors proposed to see the development of this model into recurrent and generative neural networks as it&rsquo;s related to layer normalization. They also mentioned that the current available models are fine-tuned to be used with batch normalization and that this can bias the results explaining the better performance of BN, so a re-design of the state-of-the-art learning systems to focus on GN may improve the results.</p>
+<h2 id="conclusion">Conclusion<a hidden class="anchor" aria-hidden="true" href="#conclusion">#</a></h2>
+<p>Training neural networks using SGD is a complex task. There are different ways to improve the efficiency while training these algorithms and reparametrization of the inputs has been an effective way to do it. <strong>Batch normalization</strong> makes possible faster convergences, higher learning rates and the use of saturating functions without the fear of saturation when poor initialization was done.</p>
+<p>However, the dependency of the algorithm on the mini-batch size makes it computational expensive and  inappropriate for online learning or RNNs. <strong>Layer normalization</strong> tried to face this flaw having excellent results normalizing over the hidden neurons of a layer instead over all the training batch.</p>
+<p>Finally <strong>Group normalization</strong>, took the ideas of layer normalization and applied them to ConvNets. They segmented the units of a hidden layer in different groups and computed the normalization for each of them. The results outperformed the layer normalization techniques.</p>
+<h2 id="references">References<a hidden class="anchor" aria-hidden="true" href="#references">#</a></h2>
+<p>[1] <a href="https://arxiv.org/abs/1502.03167">Batch Normalization</a> by Sergey Ioffe and Christian Szegedy</p>
+<p>[2] <a href="https://arxiv.org/abs/1607.06450">Layer Normalization</a> by Jimmy Lei Ba and Jamie Ryan Kiros and Geoffrey E. Hinton</p>
+<p>[3] <a href="https://arxiv.org/abs/1803.08494">Group Normalization</a> by Yuxin Wu and Kaiming He</p>
+<p>[4] <a href="https://www.deeplearningbook.org/">Deep Learning</a> by Ian Goodfellow, and Yoshua Bengio and Aaron Courville</p>
+<p>[5] <a href="http://cs231n.stanford.edu/">CS231n: CNN for Visual Recognition</a></p>
+<p>This post code functions are from my answers to the assigment 2 of the course CS231n.</p>
+
+
+  </div>
+
+  <footer class="post-footer">
+    <ul class="post-tags">
+    </ul>
+  </footer>
+</article>
+    </main>
+    
+<footer class="footer">
+    <span>&copy; 2022 <a href="http://example.org/">Isra Salazar</a></span>
+    <span>
+        Powered by
+        <a href="https://gohugo.io/" rel="noopener noreferrer" target="_blank">Hugo</a> &
+        <a href="https://git.io/hugopapermod" rel="noopener" target="_blank">PaperMod</a>
+    </span>
+</footer>
+<a href="#top" aria-label="go to top" title="Go to Top (Alt + G)" class="top-link" id="top-link" accesskey="g">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12 6" fill="currentColor">
+        <path d="M12 6H0l6-6z" />
+    </svg>
+</a>
+
+<script>
+    let menu = document.getElementById('menu')
+    if (menu) {
+        menu.scrollLeft = localStorage.getItem("menu-scroll-position");
+        menu.onscroll = function () {
+            localStorage.setItem("menu-scroll-position", menu.scrollLeft);
+        }
+    }
+
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener("click", function (e) {
+            e.preventDefault();
+            var id = this.getAttribute("href").substr(1);
+            if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView({
+                    behavior: "smooth"
+                });
+            } else {
+                document.querySelector(`[id='${decodeURIComponent(id)}']`).scrollIntoView();
+            }
+            if (id === "top") {
+                history.replaceState(null, null, " ");
+            } else {
+                history.pushState(null, null, `#${id}`);
+            }
+        });
+    });
+
+</script>
+<script>
+    var mybutton = document.getElementById("top-link");
+    window.onscroll = function () {
+        if (document.body.scrollTop > 800 || document.documentElement.scrollTop > 800) {
+            mybutton.style.visibility = "visible";
+            mybutton.style.opacity = "1";
+        } else {
+            mybutton.style.visibility = "hidden";
+            mybutton.style.opacity = "0";
+        }
+    };
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+</script>
+</body>
+
+</html>

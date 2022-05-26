@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>Blogs on Isra Salazar</title>
+    <link>http://example.org/blog/</link>
+    <description>Recent content in Blogs on Isra Salazar</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Wed, 18 May 2022 13:28:00 +0200</lastBuildDate><atom:link href="http://example.org/blog/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Variational Inference</title>
+      <link>http://example.org/blog/variational-inference/</link>
+      <pubDate>Wed, 18 May 2022 13:28:00 +0200</pubDate>
+      
+      <guid>http://example.org/blog/variational-inference/</guid>
+      <description>Variational Inference (VI) is a powerful tool to approximate probablity densities using optimization, and it&amp;rsquo;s the base for most of the actual techiniques in Bayesian Machine Learning. This is the first post in a series of Inference Based models so we are going to review the main algorithm behind them.
+ Hola</description>
+    </item>
+    
+    <item>
+      <title>Understanding Batch, Layer and Group Normalization</title>
+      <link>http://example.org/blog/normalizations/</link>
+      <pubDate>Wed, 20 May 2020 16:34:50 +0200</pubDate>
+      
+      <guid>http://example.org/blog/normalizations/</guid>
+      <description>This post is an analysis of the actual normalization techniques and why and how to implement them for neural networks. It&amp;rsquo;s based on the paper of Ioffee and Szegedy [1] from 2015, the modification proposed for Layer Normalization [2] and a much more recent work of Group Normalization [3].
+Batch Normalization (BN) is a milestone technique in the development of deep learning. - Group Normalization paper.
+  One of the big difficulties of deep neural networks is the training stage and its optimization.</description>
+    </item>
+    
+  </channel>
+</rss>
