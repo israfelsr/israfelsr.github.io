@@ -5,10 +5,10 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta name="robots" content="index, follow">
-<title>Variational Inference | Isra Salazar</title>
+<title>Explaining Variational Inference | Isra Salazar</title>
 <meta name="keywords" content="">
-<meta name="description" content=" Variational Inference (VI) is a powerful tool to approximate probablity densities using optimization, and it&rsquo;s the base for most of the actual techiniques in Bayesian Machine Learning. This is the first post in a series of Inference Based models so we are going to review the main algorithm behind them.
- Introduction: Short summary of what is Variational Inference Explain the Baysian modeling and the problematic Deep dive into Variational Inference ">
+<meta name="description" content="How to approximate difficult-to-compute probability densities is an important problem in statistics. Variational Inference (VI) is a statistical inference framework that addresses this problem using optimization. This allows the use of it along with modern and fast optimization techniques which is ideal to approximate probability density functions of large datasets and complex models.
+In this post I&rsquo;m going to review Variational Inference, explaining the concepts that it involves, its derivation from the variational methods and its implications in the bayesian inference problem and in current machine learning techniques.">
 <meta name="author" content="">
 <link rel="canonical" href="https://israfelsr.github.io/blog/variational-inference/">
 
@@ -68,18 +68,18 @@
         }
 
     </style>
-</noscript><meta property="og:title" content="Variational Inference" />
-<meta property="og:description" content=" Variational Inference (VI) is a powerful tool to approximate probablity densities using optimization, and it&rsquo;s the base for most of the actual techiniques in Bayesian Machine Learning. This is the first post in a series of Inference Based models so we are going to review the main algorithm behind them.
- Introduction: Short summary of what is Variational Inference Explain the Baysian modeling and the problematic Deep dive into Variational Inference " />
+</noscript><meta property="og:title" content="Explaining Variational Inference" />
+<meta property="og:description" content="How to approximate difficult-to-compute probability densities is an important problem in statistics. Variational Inference (VI) is a statistical inference framework that addresses this problem using optimization. This allows the use of it along with modern and fast optimization techniques which is ideal to approximate probability density functions of large datasets and complex models.
+In this post I&rsquo;m going to review Variational Inference, explaining the concepts that it involves, its derivation from the variational methods and its implications in the bayesian inference problem and in current machine learning techniques." />
 <meta property="og:type" content="article" />
 <meta property="og:url" content="https://israfelsr.github.io/blog/variational-inference/" /><meta property="article:section" content="blog" />
 <meta property="article:published_time" content="2022-05-18T13:28:00&#43;02:00" />
 <meta property="article:modified_time" content="2022-05-18T13:28:00&#43;02:00" />
 
 <meta name="twitter:card" content="summary"/>
-<meta name="twitter:title" content="Variational Inference"/>
-<meta name="twitter:description" content=" Variational Inference (VI) is a powerful tool to approximate probablity densities using optimization, and it&rsquo;s the base for most of the actual techiniques in Bayesian Machine Learning. This is the first post in a series of Inference Based models so we are going to review the main algorithm behind them.
- Introduction: Short summary of what is Variational Inference Explain the Baysian modeling and the problematic Deep dive into Variational Inference "/>
+<meta name="twitter:title" content="Explaining Variational Inference"/>
+<meta name="twitter:description" content="How to approximate difficult-to-compute probability densities is an important problem in statistics. Variational Inference (VI) is a statistical inference framework that addresses this problem using optimization. This allows the use of it along with modern and fast optimization techniques which is ideal to approximate probability density functions of large datasets and complex models.
+In this post I&rsquo;m going to review Variational Inference, explaining the concepts that it involves, its derivation from the variational methods and its implications in the bayesian inference problem and in current machine learning techniques."/>
 
 
 <script type="application/ld+json">
@@ -96,7 +96,7 @@
     {
       "@type": "ListItem",
       "position":  2 ,
-      "name": "Variational Inference",
+      "name": "Explaining Variational Inference",
       "item": "https://israfelsr.github.io/blog/variational-inference/"
     }
   ]
@@ -106,14 +106,14 @@
 {
   "@context": "https://schema.org",
   "@type": "BlogPosting",
-  "headline": "Variational Inference",
-  "name": "Variational Inference",
-  "description": " Variational Inference (VI) is a powerful tool to approximate probablity densities using optimization, and it\u0026rsquo;s the base for most of the actual techiniques in Bayesian Machine Learning. This is the first post in a series of Inference Based models so we are going to review the main algorithm behind them.\n Introduction: Short summary of what is Variational Inference Explain the Baysian modeling and the problematic Deep dive into Variational Inference ",
+  "headline": "Explaining Variational Inference",
+  "name": "Explaining Variational Inference",
+  "description": "How to approximate difficult-to-compute probability densities is an important problem in statistics. Variational Inference (VI) is a statistical inference framework that addresses this problem using optimization. This allows the use of it along with modern and fast optimization techniques which is ideal to approximate probability density functions of large datasets and complex models.\nIn this post I\u0026rsquo;m going to review Variational Inference, explaining the concepts that it involves, its derivation from the variational methods and its implications in the bayesian inference problem and in current machine learning techniques.",
   "keywords": [
     
   ],
-  "articleBody": " Variational Inference (VI) is a powerful tool to approximate probablity densities using optimization, and it’s the base for most of the actual techiniques in Bayesian Machine Learning. This is the first post in a series of Inference Based models so we are going to review the main algorithm behind them.\n Introduction: Short summary of what is Variational Inference Explain the Baysian modeling and the problematic Deep dive into Variational Inference ",
-  "wordCount" : "70",
+  "articleBody": "How to approximate difficult-to-compute probability densities is an important problem in statistics. Variational Inference (VI) is a statistical inference framework that addresses this problem using optimization. This allows the use of it along with modern and fast optimization techniques which is ideal to approximate probability density functions of large datasets and complex models.\nIn this post I’m going to review Variational Inference, explaining the concepts that it involves, its derivation from the variational methods and its implications in the bayesian inference problem and in current machine learning techniques. I’m planning to write a full series on different bayesian machine learning methods and Variational Inference is the core building block for them.\nBayesian modeling and inference Let’s start by establishing the bayesian modeling, bayesian inference and the involved variables. Given some observable random variable \\(\\textbf{x}=x_1,..x_n\\) and a hidden random variable \\(\\textbf{z}=z_1,..z_m\\), bayesian models serach to the model the observable data \\(\\textbf{x}\\) by hidden variable \\(\\textbf{z}\\). The relation can be stated by Bayes’s Theorem.\n$$ \\begin{equation} p(\\textbf{z|x}) = \\frac{p(\\textbf{z}, \\textbf{x})}{p(\\textbf{x})} = \\frac{p(\\textbf{x|z})p(\\textbf{z})}{p(\\textbf{x})} \\end{equation} $$\nIn this setting, bayesian models draw from the prior or latent space \\(p(\\textbf{z})\\), and relate it to the observable data through the likelihood \\(p(\\textbf{x|z})\\). Every parameter of the model is treated as a random variable and we impose information about these distributions through the prior.\nBayesian inference searches to estimate the posterior \\(p(\\textbf{z|x})\\), the conditional probability density or posterior. This can be interpreted as the posterior belief of the prior \\(p(\\textbf{z})\\), the update of it, after the data \\(\\textbf{x}\\) is observed. To perform Bayesian Inference, we first need to compute of the marginal likelihood or evidence \\(p(\\textbf{x})\\), the denominator of eq. \\(1\\) which formula is shown below.\n$$ \\begin{equation} p(\\textbf{x}) = \\int p(\\textbf{z}, \\textbf{x}) d\\textbf{z} = \\int p(\\textbf{x}| \\textbf{z})p(\\textbf{z}) d\\textbf{z} \\end{equation} $$\nThe evidence \\(p(\\textbf{x})\\) is an interesting measure, because it can tell us how well the actual model can represent our data and can be directly used to compare different models. The problem with this formulation is that the posterior \\(p(\\textbf{z|x})\\) is generally intractable, as also is the computation of the marginal likelihood by the integration of eq. \\((2)\\). Due to this, we are forced to search for approximation techniques to estimate both distributions. Sampling methods, particularly Markov Chain Monte Carlo (MCMC) algorithm, is one of the prefered way to perform static inference. It converges asymptotically to the true posterior making it a good option when an accurate solution is needed. However, MCMC is computationally expensive making it not suitable in the case of large datasets or when the models are too complex.\nA Small Point on Variational Methods Variational methods are used for approximation in a different number of areas, such as quantum mechanics, finite element analysis and statistics. They turn a complex problem into a simpler one by decoupling the degrees of freedom of complex the problem at expenses of extending the problem adding extra parameters, we call them variational parameters.\nLet’s clarify this definition with a small example from Jordan, Michael I., et al (1999). Take the natural logarithm function. It can be variationally redefined by the following equation.\n$$ \\begin{equation} \\ln(x) = \\underset{\\lambda}{\\min}\\{\\lambda x - \\ln(\\lambda) - 1\\} \\end{equation} $$\nWithout much effort we can check that the function under the brackets is minimized by \\(\\lambda^\\ast=\\frac{1}{x}\\), and that by evaluating it at this optimal value the equivalence is confirmed. Notice that for a fixed \\(x\\) we have turned the logarithm function into a linear function of the variational parameter \\(\\lambda\\). More importantly, we can see that the variational function is an upper bound for the \\(\\ln(x)\\), reaching it at the optimal value of \\(\\lambda\\) for the corresponding \\(x\\). This is much easier to see graphically in the figure below.\nIn the paper, it’s possible to follow the same development for other functions which are not necessarily convex ones, as the logistic function, showing that the variational model behaves as a lower or upper bound of the analyzed function. You are probably wondering how this connect with the problem of bayesian inference and the intractables posterior \\(p(\\textbf{z|x})\\) and marginal likelihood \\(p(\\textbf{x})\\). In the same way as we have done for the logarithm, we can extend our distributions using variational parameters. The variational methods will behave as lower/upper bounds to our model.\nVariational Inference Instead of using sampling, Variational Inference transforms the inference problem into an optimization problem. VI’s aim is to approximate the posterior \\(p(\\textbf{z|x})\\) solving the bayesian inference problem and as a by-product also estimates the marginal likelihood \\(p(\\textbf{x})\\) which is the solution to the learning problem by finding the optimal variational parameters.\nThe idea behind VI is straightforward. First, we posit a family of distributions \\(q(\\textbf{z})\\in\\mathcal{Q}\\) with variational parameters, which is imposed over the latent space. Here, each candidate \\(q(\\textbf{z})\\in\\mathcal{Q}\\) is an approximation of the posterior. Then, we just search for the variational posterior or variational density \\(q^{\\ast}\\) that minimize the Kullback-Leibler (\\(\\text{KL}\\)) divergence against the true conditional posterior \\(p(\\textbf{z}|\\textbf{x})\\).\n$$ \\begin{equation} q^\\ast(\\textbf{z}) = \\underset{q(\\textbf{z}) \\in \\mathcal{Q}}{\\text{argmin}}\\ \\text{KL}(q(\\textbf{z})||p(\\textbf{z}|\\textbf{x})) \\end{equation} $$\n\\(\\text{KL}(q||p)\\) is an information theory measure that compares two distributions. It can be interpreted as the loss of information due to the assumption that some data is distributed by \\(q\\) instead of the true distribution \\(p\\). I won’t go any deeper on it but if you want to know more, I recommend you this blog. However, to compute the \\(\\text{KL}\\) divergence we face again the problem of computing first the marginal likelihood \\(p(\\textbf{x})\\).\n$$ \\begin{align} \\begin{split} \\text{KL}(q(\\textbf{z})||p(\\textbf{z|x}))\u0026\\triangleq \\sum q(\\textbf{z})\\log\\frac{q(\\textbf{z})}{p(\\textbf{z|x})}\\\\ \u0026= \\mathbb{E}_q\\Big[\\log\\frac{q(\\textbf{z})}{p(\\textbf{z|x})}\\Big]\\\\ \u0026= \\mathbb{E}_q \\Big[\\log\\frac{q(\\textbf{z})p(\\textbf{x})}{p(\\textbf{z},\\textbf{x})}\\Big]\\\\ \u0026= \\log p(\\textbf{x})+\\mathbb{E}_q\\Big[ \\log \\frac{q(\\textbf{z})}{p(\\textbf{z},\\textbf{x})}\\Big]\\\\ \u0026= \\log p(\\textbf{x})-\\mathbb{E}_q\\Big[ \\log \\frac{p(\\textbf{z},\\textbf{x})}{q(\\textbf{z})}\\Big] \\end{split} \\end{align} $$\nStarting from the definition of the divergence, we can see that the evidence \\(p(\\textbf{x})\\) showed up. To be able to perform the optimization we define the Evidence Lower Bound.\nThe Evidence Lower Bound (ELBO) Let’s pause and focus on the last equivalence in eq. \\((5)\\). We can see that the \\(\\text{KL}\\) divergence is equal to the marginal log-likelihood \\(\\log p(\\textbf{x})\\) plus a second term, and given that we are optimizing on \\(q(\\textbf{z})\\), the marginal log-likelihood is a constant for the optimization. From there, it’s not difficult to conclude that minimizing \\(\\text{KL}\\) is the same as maximizing the second term. We define the second term as the Evidence Lower Bound or ELBO.\n$$ \\begin{equation} \\text{ELBO}(q)=\\mathbb{E}_q[\\log p(\\textbf{x}, \\textbf{z})] - \\mathbb{E}_q[\\log q(\\textbf{z})] \\end{equation} $$\nELBO has some interesting properties. First, we can rewrite ELBO expanding the joint probability as the sum of the expected log-likelihood and the \\(\\text{KL}\\) between the variational prior \\(q(\\textbf{z})\\) and the true prior \\(p(\\textbf{z})\\).\n$$ \\begin{align} \\begin{split} \\text{ELBO} \u0026= \\mathbb{E}_q[\\log p(\\textbf{z})] + \\mathbb{E}_q[\\log p(\\textbf{x|z})] - \\mathbb{E}_q[\\log q(\\textbf{z})]\\\\ \u0026=\\mathbb{E}_q[\\log p(\\textbf{x|z})] - \\text{KL}(\\log p(\\textbf{z})||q(\\textbf{z})) \\end{split} \\end{align} $$\nThis allows us to better interpret what implies maximizing ELBO. On the one hand, the expected log-likelihood pushes the distribution \\(q(\\textbf{z})\\) towards values of \\(\\textbf{z}\\) that explain the observable data. On the other hand, the second term looks for a density \\(q(\\textbf{z})\\) similar to the pior \\(p(\\textbf{z})\\).\nAnother interesting property is that, as its name indicates, it sets a lower bound on the marginal log-likelihood. This comes from the fact that \\(\\text{KL}(\\cdot)\\) is always positive. Using this fact, ELBO is used as a model selection under the premise that the bound is a good approximation of the marginal likelihood, providing a basis for selecting a model.\n$$ \\begin{align} \\begin{split} \\text{KL} =\\log p(\\textbf{x}) - \\text{ELBO} \\geq 0\\\\ \\Rightarrow \\log p(\\textbf{x}) \\geq \\text{ELBO} \\end{split} \\end{align} $$\nConclusion The main takeaway is that the Variational Inference framework transforms the Bayesian Inference estimation into an optimization problem, maximizing the evidence lower bound. It provides fast and deterministic alternatives to the MCMC sampling method for the estimation of complex probability densities.\nReferences [1] Blei, David M., Alp Kucukelbir, and Jon D. McAuliffe. “Variational inference: A review for statisticians.” Journal of the American statistical Association 112.518 (2017): 859-877.\n[2] Jordan, Michael I., et al. “An introduction to variational methods for graphical models.” Machine learning 37.2 (1999): 183-233.\n[3] Gunapati, Geetakrishnasai, et al. “Variational inference as an alternative to mcmc for parameter estimation and model selection.” Publications of the Astronomical Society of Australia 39 (2022).\n[4] Ormerod, John T., and Matt P. Wand. “Explaining variational approximations.” The American Statistician 64.2 (2010): 140-153.\n[5] Doersch, Carl. “Tutorial on variational autoencoders.” arXiv preprint arXiv:1606.05908 (2016).\n[6] Kingma, Diederik P., and Max Welling. “Auto-encoding variational bayes.” arXiv preprint arXiv:1312.6114 (2013).\n",
+  "wordCount" : "1381",
   "inLanguage": "en",
   "datePublished": "2022-05-18T13:28:00+02:00",
   "dateModified": "2022-05-18T13:28:00+02:00",
@@ -197,18 +197,126 @@
   <header class="post-header">
     
     <h1 class="post-title">
-      Variational Inference<sup><span class="entry-isdraft">&nbsp;&nbsp;[draft]</span></sup>
+      Explaining Variational Inference<sup><span class="entry-isdraft">&nbsp;&nbsp;[draft]</span></sup>
     </h1>
     <div class="post-meta"><span title='2022-05-18 13:28:00 +0200 CEST'>May 18, 2022</span>
 
 </div>
-  </header> 
-  <div class="post-content"><blockquote>
-<p>Variational Inference (VI) is a powerful tool to approximate probablity densities using optimization, and it&rsquo;s the base for most of the actual techiniques in Bayesian Machine Learning. This is the first post in a series of Inference Based models so we are going to review the main algorithm behind them.</p>
-</blockquote>
-<h1 id="introduction-short-summary-of-what-is-variational-inference">Introduction: Short summary of what is Variational Inference<a hidden class="anchor" aria-hidden="true" href="#introduction-short-summary-of-what-is-variational-inference">#</a></h1>
-<h1 id="explain-the-baysian-modeling-and-the-problematic">Explain the Baysian modeling and the problematic<a hidden class="anchor" aria-hidden="true" href="#explain-the-baysian-modeling-and-the-problematic">#</a></h1>
-<h1 id="deep-dive-into-variational-inference">Deep dive into Variational Inference<a hidden class="anchor" aria-hidden="true" href="#deep-dive-into-variational-inference">#</a></h1>
+  </header> <div class="toc">
+    <details  open>
+        <summary accesskey="c" title="(Alt + C)">
+            <span class="details">Table of Contents</span>
+        </summary>
+
+        <div class="inner"><ul>
+                <li>
+                    <a href="#bayesian-modeling-and-inference" aria-label="Bayesian modeling and inference">Bayesian modeling and inference</a></li>
+                <li>
+                    <a href="#a-small-point-on-variational-methods" aria-label="A Small Point on Variational Methods">A Small Point on Variational Methods</a></li>
+                <li>
+                    <a href="#variational-inference" aria-label="Variational Inference">Variational Inference</a></li>
+                <li>
+                    <a href="#the-evidence-lower-bound-elbo" aria-label="The Evidence Lower Bound (ELBO)">The Evidence Lower Bound (ELBO)</a></li>
+                <li>
+                    <a href="#conclusion" aria-label="Conclusion">Conclusion</a></li>
+                <li>
+                    <a href="#references" aria-label="References">References</a>
+                </li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+  <div class="post-content"><p>How to approximate difficult-to-compute probability densities is an important problem in statistics. Variational Inference (VI) is a statistical inference framework that addresses this problem using optimization. This allows the use of it along with modern and fast optimization techniques which is ideal to approximate probability density functions of large datasets and complex models.</p>
+<p>In this post I&rsquo;m going to review Variational Inference, explaining the concepts that it involves, its derivation from the variational methods and its implications in the bayesian inference problem and in current machine learning techniques.
+I&rsquo;m planning to write a full series on different bayesian machine learning methods and Variational Inference is the core building block for them.</p>
+<h2 id="bayesian-modeling-and-inference">Bayesian modeling and inference<a hidden class="anchor" aria-hidden="true" href="#bayesian-modeling-and-inference">#</a></h2>
+<p>Let&rsquo;s start by establishing the bayesian modeling, bayesian inference and the involved variables. Given some observable random variable \(\textbf{x}=x_1,..x_n\) and a hidden random variable \(\textbf{z}=z_1,..z_m\), bayesian models serach to the model the observable data \(\textbf{x}\) by hidden variable \(\textbf{z}\). The relation can be stated by Bayes&rsquo;s Theorem.</p>
+<p>$$
+\begin{equation}
+p(\textbf{z|x}) = \frac{p(\textbf{z}, \textbf{x})}{p(\textbf{x})} = \frac{p(\textbf{x|z})p(\textbf{z})}{p(\textbf{x})}
+\end{equation}
+$$</p>
+<p>In this setting, bayesian models draw from the <em>prior</em> or <em>latent space</em> \(p(\textbf{z})\), and relate it to the observable data through the <em>likelihood</em> \(p(\textbf{x|z})\). Every parameter of the model is treated as a random variable and we impose information about these distributions through the prior.</p>
+<p>Bayesian inference searches to estimate the posterior \(p(\textbf{z|x})\), the <em>conditional probability density</em> or <em>posterior</em>. This can be interpreted as the posterior belief of the prior \(p(\textbf{z})\), the update of it, after the data \(\textbf{x}\) is observed. To perform Bayesian Inference, we first need to compute of the <em>marginal likelihood</em> or <em>evidence</em> \(p(\textbf{x})\), the denominator of eq. \(1\) which formula is shown below.</p>
+<p>$$
+\begin{equation}
+p(\textbf{x}) = \int p(\textbf{z}, \textbf{x}) d\textbf{z} = \int p(\textbf{x}| \textbf{z})p(\textbf{z}) d\textbf{z}
+\end{equation}
+$$</p>
+<p>The evidence \(p(\textbf{x})\) is an interesting measure, because it can tell us how well the actual model can represent our data and can be directly used to compare different models. The problem with this formulation is that the posterior \(p(\textbf{z|x})\) is generally intractable, as also is the computation of the marginal likelihood by the integration of eq. \((2)\). Due to this, we are forced to search for approximation techniques to estimate both distributions. Sampling methods, particularly <a href="https://en.wikipedia.org/wiki/Markov_chain_Monte_Carlo">Markov Chain Monte Carlo (MCMC)</a> algorithm, is one of the prefered way to perform static inference. It converges asymptotically to the true posterior making it a good option when an accurate solution is needed. However, MCMC is computationally expensive making it not suitable in the case of large datasets or when the models are too complex.</p>
+<h2 id="a-small-point-on-variational-methods">A Small Point on Variational Methods<a hidden class="anchor" aria-hidden="true" href="#a-small-point-on-variational-methods">#</a></h2>
+<p>Variational methods are used for approximation in a different number of areas, such as quantum mechanics, finite element analysis and statistics. They turn a complex problem into a simpler one by decoupling the degrees of freedom of complex the problem at expenses of extending the problem adding extra parameters, we call them <em>variational parameters</em>.</p>
+<p>Let&rsquo;s clarify this definition with a small example from <a href="https://people.eecs.berkeley.edu/~jordan/papers/variational-intro.pdf">Jordan, Michael I., et al (1999)</a>. Take the natural logarithm function. It can be variationally redefined by the following equation.</p>
+<p>$$
+\begin{equation}
+\ln(x) = \underset{\lambda}{\min}\{\lambda x - \ln(\lambda) - 1\}
+\end{equation}
+$$</p>
+<p>Without much effort we can check that the function under the brackets is minimized by \(\lambda^\ast=\frac{1}{x}\), and that by evaluating it at this optimal value the equivalence is confirmed. Notice that for a fixed  \(x\) we have turned the logarithm function into a linear function of the variational parameter \(\lambda\). More importantly, we can see that the variational function is an upper bound for the \(\ln(x)\), reaching it at the optimal value of \(\lambda\) for the corresponding \(x\). This is much easier to see graphically in the figure below.</p>
+
+
+<img src="/blog/variational-inference/linear_log.png" alt="linear log" title="Linear Log"
+     style="zoom:100%; margin-left: auto; margin-right: auto;">
+
+<p>In the paper, it&rsquo;s possible to follow the same development for other functions which are not necessarily convex ones, as the logistic function, showing that the variational model behaves as a lower or upper bound of the analyzed function. You are probably wondering how this connect with the problem of bayesian inference and the intractables posterior \(p(\textbf{z|x})\) and marginal likelihood \(p(\textbf{x})\). In the same way as we have done for the logarithm, we can extend our distributions using variational parameters. The variational methods will behave as lower/upper bounds to our model.</p>
+<h2 id="variational-inference">Variational Inference<a hidden class="anchor" aria-hidden="true" href="#variational-inference">#</a></h2>
+<p>Instead of using sampling, Variational Inference transforms the inference problem into an optimization problem. VI&rsquo;s aim is to approximate the posterior \(p(\textbf{z|x})\) solving the bayesian inference problem and as a by-product also estimates the marginal likelihood \(p(\textbf{x})\) which is the solution to the learning problem by finding the optimal variational parameters.</p>
+<p>The idea behind VI is straightforward. First, we posit a family of distributions \(q(\textbf{z})\in\mathcal{Q}\) with variational parameters, which is imposed over the latent space. Here, each candidate \(q(\textbf{z})\in\mathcal{Q}\) is an approximation of the posterior. Then, we just search for the <em>variational posterior</em> or <em>variational density</em> \(q^{\ast}\) that minimize the Kullback-Leibler (\(\text{KL}\)) divergence against the true conditional posterior \(p(\textbf{z}|\textbf{x})\).</p>
+<p>$$
+\begin{equation}
+q^\ast(\textbf{z}) = \underset{q(\textbf{z}) \in \mathcal{Q}}{\text{argmin}}\ \text{KL}(q(\textbf{z})||p(\textbf{z}|\textbf{x}))
+\end{equation}
+$$</p>
+<p>\(\text{KL}(q||p)\) is an information theory measure that compares two distributions. It can be interpreted as the loss of information due to the assumption that some data is distributed by \(q\) instead of the true distribution \(p\). I won&rsquo;t go any deeper on it but if you want to know more, I recommend you <a href="https://www.countbayesie.com/blog/2017/5/9/kullback-leibler-divergence-explained">this blog</a>.
+However, to compute the \(\text{KL}\) divergence we face again the problem of computing first the marginal likelihood \(p(\textbf{x})\).</p>
+<p>$$
+\begin{align}
+\begin{split}
+\text{KL}(q(\textbf{z})||p(\textbf{z|x}))&amp;\triangleq \sum q(\textbf{z})\log\frac{q(\textbf{z})}{p(\textbf{z|x})}\\
+&amp;= \mathbb{E}_q\Big[\log\frac{q(\textbf{z})}{p(\textbf{z|x})}\Big]\\
+&amp;= \mathbb{E}_q \Big[\log\frac{q(\textbf{z})p(\textbf{x})}{p(\textbf{z},\textbf{x})}\Big]\\
+&amp;= \log p(\textbf{x})+\mathbb{E}_q\Big[ \log \frac{q(\textbf{z})}{p(\textbf{z},\textbf{x})}\Big]\\
+&amp;= \log p(\textbf{x})-\mathbb{E}_q\Big[ \log \frac{p(\textbf{z},\textbf{x})}{q(\textbf{z})}\Big]
+\end{split}
+\end{align}
+$$</p>
+<p>Starting from the definition of the divergence, we can see that the evidence \(p(\textbf{x})\) showed up. To be able to perform the optimization we define the Evidence Lower Bound.</p>
+<h2 id="the-evidence-lower-bound-elbo">The Evidence Lower Bound (ELBO)<a hidden class="anchor" aria-hidden="true" href="#the-evidence-lower-bound-elbo">#</a></h2>
+<p>Let&rsquo;s pause and focus on the last equivalence in eq. \((5)\). We can see that the \(\text{KL}\) divergence is equal to the marginal log-likelihood \(\log p(\textbf{x})\) plus a second term, and given that we are optimizing on \(q(\textbf{z})\), the marginal log-likelihood is a constant for the optimization. From there, it&rsquo;s not difficult to conclude that minimizing \(\text{KL}\) is the same as maximizing the second term. We define the second term as the Evidence Lower Bound or ELBO.</p>
+<p>$$
+\begin{equation}
+\text{ELBO}(q)=\mathbb{E}_q[\log p(\textbf{x}, \textbf{z})] - \mathbb{E}_q[\log q(\textbf{z})]
+\end{equation}
+$$</p>
+<p>ELBO has some interesting properties. First, we can rewrite ELBO expanding the joint probability as the sum of the expected log-likelihood and the \(\text{KL}\) between the variational prior \(q(\textbf{z})\) and the true prior \(p(\textbf{z})\).</p>
+<p>$$
+\begin{align}
+\begin{split}
+\text{ELBO} &amp;= \mathbb{E}_q[\log p(\textbf{z})] + \mathbb{E}_q[\log p(\textbf{x|z})] - \mathbb{E}_q[\log q(\textbf{z})]\\
+&amp;=\mathbb{E}_q[\log p(\textbf{x|z})] - \text{KL}(\log p(\textbf{z})||q(\textbf{z}))
+\end{split}
+\end{align}
+$$</p>
+<p>This allows us to better interpret what implies maximizing ELBO. On the one hand, the expected log-likelihood pushes the distribution \(q(\textbf{z})\) towards values of \(\textbf{z}\) that explain the observable data. On the other hand, the second term looks for a density \(q(\textbf{z})\) similar to the pior \(p(\textbf{z})\).</p>
+<p>Another interesting property is that, as its name indicates, it sets a lower bound on the marginal log-likelihood. This comes from the fact that \(\text{KL}(\cdot)\) is always positive. Using this fact, ELBO is used as a model selection under the premise that the bound is a good approximation of the marginal likelihood, providing a basis for selecting a model.</p>
+<p>$$
+\begin{align}
+\begin{split}
+\text{KL} =\log p(\textbf{x}) - \text{ELBO} \geq 0\\
+\Rightarrow \log p(\textbf{x}) \geq \text{ELBO}
+\end{split}
+\end{align}
+$$</p>
+<h2 id="conclusion">Conclusion<a hidden class="anchor" aria-hidden="true" href="#conclusion">#</a></h2>
+<p>The main takeaway is that the Variational Inference framework transforms the Bayesian Inference estimation into an optimization problem, maximizing the evidence lower bound. It provides fast and deterministic alternatives to the MCMC sampling method for the estimation of complex probability densities.</p>
+<h2 id="references">References<a hidden class="anchor" aria-hidden="true" href="#references">#</a></h2>
+<p>[1] Blei, David M., Alp Kucukelbir, and Jon D. McAuliffe. <a href="https://arxiv.org/abs/1601.00670">&ldquo;Variational inference: A review for statisticians.&rdquo;</a> Journal of the American statistical Association 112.518 (2017): 859-877.</p>
+<p>[2] Jordan, Michael I., et al. <a href="https://people.eecs.berkeley.edu/~jordan/papers/variational-intro.pdf">&ldquo;An introduction to variational methods for graphical models.&rdquo;</a> Machine learning 37.2 (1999): 183-233.</p>
+<p>[3] Gunapati, Geetakrishnasai, et al. <a href="https://arxiv.org/abs/1803.06473">&ldquo;Variational inference as an alternative to mcmc for parameter estimation and model selection.&rdquo;</a> Publications of the Astronomical Society of Australia 39 (2022).</p>
+<p>[4] Ormerod, John T., and Matt P. Wand. <a href="https://www.jstor.org/stable/pdf/20799885.pdf">&ldquo;Explaining variational approximations.&rdquo;</a> The American Statistician 64.2 (2010): 140-153.</p>
+<p>[5] Doersch, Carl. <a href="https://arxiv.org/abs/1606.05908">&ldquo;Tutorial on variational autoencoders.&rdquo;</a> arXiv preprint arXiv:1606.05908 (2016).</p>
+<p>[6] Kingma, Diederik P., and Max Welling. <a href="https://arxiv.org/abs/1312.6114">&ldquo;Auto-encoding variational bayes.&rdquo;</a> arXiv preprint arXiv:1312.6114 (2013).</p>
 
 
   </div>
