@@ -6,17 +6,7 @@
     <description>Recent content in Blogs on Isra Salazar</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Wed, 18 May 2022 13:28:00 +0200</lastBuildDate><atom:link href="https://israfelsr.github.io/blog/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>Explaining Variational Inference</title>
-      <link>https://israfelsr.github.io/blog/variational-inference/</link>
-      <pubDate>Wed, 18 May 2022 13:28:00 +0200</pubDate>
-      
-      <guid>https://israfelsr.github.io/blog/variational-inference/</guid>
-      <description>How to approximate difficult-to-compute probability densities is an important problem in statistics. Variational Inference (VI) is a statistical inference framework that addresses this problem using optimization. This allows the use of it along with modern and fast optimization techniques which is ideal to approximate probability density functions of large datasets and complex models.
-In this post I&amp;rsquo;m going to review Variational Inference, explaining the concepts that it involves, its derivation from the variational methods and its implications in the bayesian inference problem and in current machine learning techniques.</description>
-    </item>
-    
+    <lastBuildDate>Wed, 20 May 2020 16:34:50 +0200</lastBuildDate><atom:link href="https://israfelsr.github.io/blog/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Understanding Batch, Layer and Group Normalization</title>
       <link>https://israfelsr.github.io/blog/normalizations/</link>
