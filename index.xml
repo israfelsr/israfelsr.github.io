@@ -6,16 +6,7 @@
     <description>Recent content on Isra Salazar</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Fri, 24 Jun 2022 15:13:19 +0200</lastBuildDate><atom:link href="https://israfelsr.github.io/index.xml" rel="self" type="application/rss+xml" />
-    <item>
-      <title>Building Variational Models</title>
-      <link>https://israfelsr.github.io/blog/building-variational-models/</link>
-      <pubDate>Fri, 24 Jun 2022 15:13:19 +0200</pubDate>
-      
-      <guid>https://israfelsr.github.io/blog/building-variational-models/</guid>
-      <description>The Latent Space Autoencoders Variational AutoEncoders Conditional Variational AutoEncoders B-VAE VQ-VAE Others Conclusion References </description>
-    </item>
-    
+    <lastBuildDate>Mon, 06 Jun 2022 00:00:00 +0000</lastBuildDate><atom:link href="https://israfelsr.github.io/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>Explaining Variational Inference</title>
       <link>https://israfelsr.github.io/blog/variational-inference/</link>
@@ -34,7 +25,7 @@ In this post I&amp;rsquo;m going to review Variational Inference, explaining the
       <guid>https://israfelsr.github.io/blog/normalizations/</guid>
       <description>This post is an analysis of the actual normalization techniques and why and how to implement them for neural networks. It&amp;rsquo;s based on the paper of Ioffee and Szegedy [1] from 2015, the modification proposed for Layer Normalization [2] and a much more recent work of Group Normalization [3].
 Batch Normalization (BN) is a milestone technique in the development of deep learning. - Group Normalization paper.
-  One of the big difficulties of deep neural networks is the training stage and its optimization.</description>
+One of the big difficulties of deep neural networks is the training stage and its optimization.</description>
     </item>
     
     <item>
